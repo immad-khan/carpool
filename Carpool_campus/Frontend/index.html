@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarpoolCampus — Share the ride to campus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --radius-s:10px; --radius-m:16px; --radius-l:24px; --radius-pill:999px;
+  --amber:#1996C4; --amber-ink:#0E5A78;
+  --teal:#0E8E7E; --teal-soft:#DFF2EE;
+  --coral:#E15B4D; --coral-soft:#FBEAE7;
+  --shadow: 0 16px 40px -16px rgba(10,40,60,.35);
+  --grad-a:#E4F7FD; --grad-b:#3AA9DD; --grad-c:#0E6FA8;
+  --ff-display:'Manrope',sans-serif;
+  --ff-body:'IBM Plex Sans',sans-serif;
+  --ff-mono:'IBM Plex Mono',monospace;
+}
+html[data-theme="light"]{
+  --bg:#EEF3F6; --bg-elev:#FFFFFF; --bg-sidebar:#0C2A3D; --bg-sidebar-elev:#123950;
+  --ink:#0C2334; --ink-soft:#4C6473; --ink-faint:#8497A3;
+  --border:#DCE6EC; --border-soft:#EAF1F4;
+  --amber:#1996C4; --amber-soft:#DEF3FB;
+  --teal:#0E8E7E; --teal-soft:#DFF2EE;
+  --coral:#C94A3C; --coral-soft:#FBE7E4;
+  --sidebar-ink:#EAF6FC; --sidebar-ink-soft:#84AEC2;
+  --input-bg:#FFFFFF;
+  --grad-a:#E4F7FD; --grad-b:#3AA9DD; --grad-c:#0E6FA8;
+}
+html[data-theme="dark"]{
+  --bg:#081A25; --bg-elev:#0E2534; --bg-sidebar:#051620; --bg-sidebar-elev:#0C2130;
+  --ink:#EAF6FC; --ink-soft:#9FC2D3; --ink-faint:#5E828F;
+  --border:#173547; --border-soft:#112935;
+  --amber:#3FC1F0; --amber-soft:#0E2C38;
+  --teal:#2FD9C4; --teal-soft:#0E2C28;
+  --coral:#FF7C6C; --coral-soft:#2C1815;
+  --sidebar-ink:#EAF6FC; --sidebar-ink-soft:#5E828F;
+  --input-bg:#0F243173;
+  --shadow: 0 16px 40px -16px rgba(0,0,0,.6);
+  --grad-a:#0E2C3B; --grad-b:#0E5578; --grad-c:#123B54;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--ff-body);
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  transition:background .25s ease, color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--ff-display); margin:0; letter-spacing:-0.01em;}
+.mono{font-family:var(--ff-mono);}
+a{color:inherit;}
+button{font-family:inherit;}
+::selection{background:var(--amber-soft);}
+.icon{width:18px;height:18px;stroke-width:1.75;flex-shrink:0;}
+.icon-sm{width:15px;height:15px;stroke-width:2;}
+.icon-lg{width:26px;height:26px;stroke-width:1.5;}
+
+/* ============================= LAYOUT ============================= */
+#app{min-height:100vh;}
+.auth-shell{
+  min-height:100vh; display:grid; grid-template-columns: 1.05fr 1fr;
+}
+@media (max-width:900px){ .auth-shell{grid-template-columns:1fr;} .auth-visual{display:none;} }
+.auth-visual{
+  background:linear-gradient(135deg, var(--grad-a) 0%, var(--grad-b) 62%, var(--grad-c) 100%);
+  color:var(--ink); position:relative; overflow:hidden;
+  padding:40px 48px; display:flex; flex-direction:column; justify-content:space-between; gap:22px;
+}
+.zigzag{position:absolute; opacity:.55; color:var(--ink);}
+.auth-visual .board{
+  border:1px solid rgba(12,35,52,.12); border-radius:var(--radius-l); overflow:hidden; background:rgba(255,255,255,.72); backdrop-filter:blur(8px);
+  box-shadow:var(--shadow);
+}
+.board-head{display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid rgba(12,35,52,.1);}
+.board-head span{font-family:var(--ff-mono); font-size:11.5px; color:var(--ink-faint); letter-spacing:.03em;}
+.board-row{display:flex; align-items:center; gap:14px; padding:13px 18px; border-bottom:1px solid rgba(12,35,52,.07);}
+.board-row:last-child{border-bottom:none;}
+.board-row .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.board-time{font-family:var(--ff-mono); font-size:15px; width:56px; color:var(--amber-ink);}
+.board-route{flex:1; font-size:14px; color:var(--ink);}
+.board-route small{display:block; color:var(--ink-faint); font-size:12px; margin-top:2px;}
+.board-status{font-family:var(--ff-mono); font-size:11px; padding:3px 8px; border-radius:20px; text-transform:lowercase;}
+
+.app-shell{display:grid; grid-template-columns:230px 1fr; min-height:100vh;}
+@media (max-width:880px){ .app-shell{grid-template-columns:1fr;} }
+.sidebar{
+  background:var(--bg-sidebar); color:var(--sidebar-ink); padding:22px 14px; display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh;
+}
+@media (max-width:880px){ .sidebar{display:none;} }
+.brand{display:flex; align-items:center; gap:10px; padding:6px 10px 26px 10px;}
+.brand .mark{width:32px;height:32px;border-radius:11px;background:linear-gradient(155deg,var(--grad-b),var(--grad-c)); display:flex; align-items:center; justify-content:center; color:#EAF6FC;}
+.brand b{font-family:var(--ff-display); font-size:16px; font-weight:800;}
+.nav{display:flex; flex-direction:column; gap:2px; flex:1;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:var(--radius-pill);
+  color:var(--sidebar-ink-soft); cursor:pointer; font-size:13.5px; font-weight:600; position:relative; border:none; background:none; text-align:left; width:100%;
+}
+.nav-item:hover{background:var(--bg-sidebar-elev); color:var(--sidebar-ink);}
+.nav-item.active{background:var(--amber); color:#04141C;}
+.nav-item .badge-count{margin-left:auto; background:var(--coral); color:#fff; font-family:var(--ff-mono); font-size:10.5px; padding:1px 6px; border-radius:20px; font-weight:600;}
+.nav-foot{border-top:1px solid #23264A; padding-top:14px; margin-top:8px;}
+.nav-user{display:flex; align-items:center; gap:10px; padding:6px 10px;}
+.nav-user b{display:block; font-size:13px; font-weight:600;}
+.nav-user span{font-size:11.5px; color:var(--sidebar-ink-soft);}
+
+.main-col{display:flex; flex-direction:column; min-width:0;}
+.topbar{
+  display:flex; align-items:center; gap:14px; padding:16px 26px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--bg); z-index:20; backdrop-filter:blur(6px);
+}
+@media (max-width:880px){ .topbar{padding:14px 16px;} }
+.topbar h1{font-size:19px;}
+.topbar .sub{font-size:12.5px; color:var(--ink-faint); margin-top:1px;}
+.topbar-actions{margin-left:auto; display:flex; align-items:center; gap:8px;}
+.icon-btn{
+  width:36px; height:36px; border-radius:50%; border:1px solid var(--border); background:var(--bg-elev);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink); position:relative;
+}
+.icon-btn:hover{border-color:var(--amber);}
+.icon-btn .dot-badge{position:absolute; top:6px; right:6px; width:7px;height:7px;border-radius:50%; background:var(--coral); border:1.5px solid var(--bg-elev);}
+.hamburger{display:none;}
+@media (max-width:880px){ .hamburger{display:flex;} }
+
+.content{padding:26px; max-width:1180px; width:100%; margin:0 auto; flex:1;}
+@media (max-width:880px){ .content{padding:16px; padding-bottom:88px;} }
+
+.bottom-nav{
+  display:none; position:fixed; bottom:0; left:0; right:0; background:var(--bg-sidebar); border-top:1px solid #23264A;
+  z-index:30; padding:6px 4px 8px;
+}
+@media (max-width:880px){ .bottom-nav{display:flex; justify-content:space-around;} }
+.bnav-item{display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--sidebar-ink-soft); background:none; border:none; padding:6px 8px; font-size:10px; font-family:var(--ff-body); position:relative;}
+.bnav-item.active{color:var(--amber);}
+.bnav-item .badge-count{position:absolute; top:2px; right:2px; width:7px;height:7px; border-radius:50%; background:var(--coral);}
+
+/* ============================= COMPONENTS ============================= */
+.section-title{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; gap:10px; flex-wrap:wrap;}
+.section-title h2{font-size:16px;}
+.section-title .hint{font-size:12.5px; color:var(--ink-faint);}
+
+.btn{
+  display:inline-flex; align-items:center; gap:7px; justify-content:center; padding:10px 18px; border-radius:var(--radius-pill);
+  border:1px solid transparent; font-weight:700; font-size:13.5px; cursor:pointer; transition:transform .1s ease, opacity .15s;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.55; cursor:not-allowed;}
+.btn-primary{background:var(--bg-sidebar); color:#EAF6FC;}
+html[data-theme="dark"] .btn-primary{background:var(--amber); color:#04141C;}
+.btn-primary:hover{filter:brightness(1.15);}
+.btn-ghost{background:var(--bg-elev); color:var(--ink); border-color:var(--border);}
+.btn-ghost:hover{border-color:var(--amber);}
+.btn-quiet{background:none; color:var(--ink-soft); border:none; padding:8px 10px;}
+.btn-quiet:hover{color:var(--ink);}
+.btn-danger{background:var(--coral-soft); color:var(--coral); border-color:transparent;}
+.btn-danger:hover{filter:brightness(0.97);}
+.btn-teal{background:var(--teal-soft); color:var(--teal);}
+.btn-sm{padding:7px 12px; font-size:12.5px;}
+.btn-block{width:100%;}
+
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px;}
+.field .hint{font-size:11.5px; color:var(--ink-faint); margin-top:5px;}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=time],input[type=date],input[type=tel],select,textarea{
+  width:100%; padding:11px 13px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--input-bg);
+  color:var(--ink); font-family:var(--ff-body); font-size:14px; outline:none;
+}
+textarea{resize:vertical; min-height:70px;}
+input:focus,select:focus,textarea:focus{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft);}
+.input-err{border-color:var(--coral) !important;}
+.err-msg{color:var(--coral); font-size:12px; margin-top:6px;}
+.radio-row{display:flex; gap:8px;}
+.radio-chip{flex:1; border:1px solid var(--border); border-radius:var(--radius-s); padding:10px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; gap:6px;}
+.radio-chip.sel{border-color:var(--amber); background:var(--amber-soft); color:var(--amber-ink); }
+html[data-theme=dark] .radio-chip.sel{color:var(--amber);}
+.day-row{display:flex; gap:6px; flex-wrap:wrap;}
+.day-chip{width:42px; height:42px; border-radius:50%; border:1px solid var(--border); background:var(--input-bg); color:var(--ink-soft); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--ff-mono);}
+.day-chip.sel{background:var(--teal); border-color:var(--teal); color:#fff;}
+
+.card{background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-l); padding:20px;}
+.hero-card{
+  background:linear-gradient(120deg, var(--grad-a) 0%, var(--grad-b) 70%, var(--grad-c) 100%); color:var(--ink); border-radius:var(--radius-l);
+  padding:26px 28px; position:relative; overflow:hidden; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.hero-top{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; position:relative; z-index:1;}
+.hero-top .eyebrow{font-size:12px; color:var(--ink-soft); font-weight:600;}
+.hero-route{font-family:var(--ff-display); font-weight:800; font-size:22px; margin-top:6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.hero-route .arrow{color:var(--amber-ink);}
+.hero-meta{display:flex; gap:22px; margin-top:18px; flex-wrap:wrap; position:relative; z-index:1;}
+.hero-meta div b{display:block; font-family:var(--ff-mono); font-size:20px; color:var(--ink);}
+.hero-meta div span{font-size:11.5px; color:var(--ink-soft);}
+
+.stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;}
+@media (max-width:760px){ .stat-grid{grid-template-columns:repeat(2,1fr);} }
+.stat-card{background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-m); padding:16px;}
+.stat-card .icon-wrap{width:32px;height:32px;border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;}
+.stat-card b{display:block; font-family:var(--ff-mono); font-size:22px;}
+.stat-card span{font-size:12px; color:var(--ink-faint);}
+
+.list{border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; background:var(--bg-elev);}
+.row{display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--border-soft); }
+.row:last-child{border-bottom:none;}
+.row:hover{background:var(--bg);}
+@media (max-width:640px){ .row{flex-wrap:wrap;} }
+.row-time{font-family:var(--ff-mono); font-size:16px; color:var(--ink); width:58px; flex-shrink:0;}
+.row-line{width:3px; align-self:stretch; border-radius:2px; flex-shrink:0;}
+.row-main{flex:1; min-width:0;}
+.row-main .title{font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.row-main .sub{font-size:12.5px; color:var(--ink-faint); margin-top:3px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+.row-actions{display:flex; gap:8px; flex-shrink:0; align-items:center;}
+
+.badge{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:4px 9px; border-radius:20px; font-family:var(--ff-mono); text-transform:lowercase;}
+.b-amber{background:var(--amber-soft); color:var(--amber-ink);} html[data-theme=dark] .b-amber{color:var(--amber);}
+.b-teal{background:var(--teal-soft); color:var(--teal);}
+.b-coral{background:var(--coral-soft); color:var(--coral);}
+.b-grey{background:var(--border-soft); color:var(--ink-faint);}
+
+.avatar{border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--ff-display); flex-shrink:0; color:#fff; overflow:hidden;}
+.tabs{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:20px; overflow-x:auto;}
+.tab{padding:10px 4px; margin-right:22px; font-size:13.5px; font-weight:600; color:var(--ink-faint); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;}
+.tab.active{color:var(--ink); border-color:var(--amber);}
+
+.empty{text-align:center; padding:56px 20px; color:var(--ink-faint);}
+.empty .icon-lg{margin:0 auto 14px; color:var(--ink-faint);}
+.empty h3{font-size:15px; color:var(--ink); margin-bottom:6px;}
+.empty p{font-size:13px; max-width:320px; margin:0 auto 16px;}
+
+.modal-overlay{position:fixed; inset:0; background:rgba(10,11,20,.55); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px; backdrop-filter:blur(2px);}
+.modal{background:var(--bg-elev); border-radius:var(--radius-l); padding:26px; max-width:460px; width:100%; max-height:88vh; overflow:auto; box-shadow:var(--shadow); border:1px solid var(--border);}
+.modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+.modal-head h3{font-size:17px;}
+
+.toast-wrap{position:fixed; bottom:20px; right:20px; z-index:200; display:flex; flex-direction:column; gap:8px;}
+@media (max-width:880px){ .toast-wrap{left:16px; right:16px; bottom:80px;} }
+.toast{background:var(--bg-sidebar); color:var(--sidebar-ink); padding:12px 16px; border-radius:var(--radius-s); font-size:13px; box-shadow:var(--shadow); display:flex; align-items:center; gap:10px; min-width:220px; animation:toastin .2s ease;}
+.toast.err{background:var(--coral);}
+@keyframes toastin{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+.spinner{width:16px;height:16px;border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; animation:spin .7s linear infinite;}
+.spinner-dark{border:2px solid var(--border); border-top-color:var(--amber);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-page{display:flex; align-items:center; justify-content:center; padding:80px 0; color:var(--ink-faint); gap:10px;}
+
+.star-input{display:flex; gap:6px;}
+.star-input button{background:none; border:none; cursor:pointer; padding:2px; color:var(--border);}
+.star-input button.on{color:var(--amber);}
+.star-row{display:flex; gap:2px;}
+.star-row svg{color:var(--border);}
+.star-row svg.on{color:var(--amber); fill:var(--amber);}
+
+.progress-track{height:6px; background:var(--border-soft); border-radius:6px; overflow:hidden;}
+.progress-fill{height:100%; background:var(--teal); border-radius:6px;}
+
+.divider{height:1px; background:var(--border); margin:20px 0;}
+.kv{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border-soft); font-size:13.5px;}
+.kv:last-child{border-bottom:none;}
+.kv span:first-child{color:var(--ink-faint);}
+.kv b{font-family:var(--ff-mono);}
+
+.notif-item{display:flex; gap:12px; padding:15px 18px; border-bottom:1px solid var(--border-soft); cursor:pointer;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item:hover{background:var(--bg);}
+.notif-item.unread{background:var(--amber-soft);}
+html[data-theme=dark] .notif-item.unread{background:#20200f;}
+.notif-ic{width:36px;height:36px;border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.notif-item p{margin:0; font-size:13.5px;}
+.notif-item time{font-size:11.5px; color:var(--ink-faint);}
+
+.table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-l); background:var(--bg-elev);}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px;}
+th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600; padding:12px 16px; border-bottom:1px solid var(--border);}
+td{padding:13px 16px; border-bottom:1px solid var(--border-soft);}
+tr:last-child td{border-bottom:none;}
+
+.link-text{color:var(--teal); font-weight:600; cursor:pointer; font-size:13px; text-decoration:none;}
+.link-text:hover{text-decoration:underline;}
+.form-grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:520px){ .form-grid-2{grid-template-columns:1fr;} }
+.skeleton{background:linear-gradient(90deg, var(--border-soft) 25%, var(--border) 37%, var(--border-soft) 63%); background-size:400% 100%; animation:sk 1.4s ease infinite; border-radius:8px;}
+@keyframes sk{0%{background-position:100% 50%;} 100%{background-position:0 50%;}}
+.demo-note{font-size:11.5px; color:var(--ink-faint); background:var(--bg); border:1px dashed var(--border); border-radius:8px; padding:9px 12px; margin-top:8px; display:flex; gap:8px; align-items:flex-start;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ======================================================================
+   BACKEND CONFIG — points this frontend at a real CarpoolCampus API
+   ====================================================================== */
+function getApiBaseUrl(){ return localStorage.getItem('cc_api_base') || 'http://localhost:5000/api/v1'; }
+function setApiBaseUrl(url){ localStorage.setItem('cc_api_base', url.replace(/\/+$/,'')); }
+
+/* ======================================================================
+   TOKEN STORAGE (real browser localStorage — this runs as a normal page)
+   ====================================================================== */
+function getAccessToken(){ return localStorage.getItem('cc_access_token'); }
+function getRefreshToken(){ return localStorage.getItem('cc_refresh_token'); }
+function setTokens(access, refresh){ if(access) localStorage.setItem('cc_access_token', access); if(refresh) localStorage.setItem('cc_refresh_token', refresh); }
+function clearTokens(){ localStorage.removeItem('cc_access_token'); localStorage.removeItem('cc_refresh_token'); }
+
+class ApiClientError extends Error{
+  constructor(code, message, status, details){ super(message||'Request failed'); this.code=code; this.status=status; this.details=details; }
+}
+
+/* ======================================================================
+   CORE FETCH WRAPPER — matches the API's {success,data,pagination}/{success:false,error} envelope
+   ====================================================================== */
+async function apiFetch(path, {method='GET', body, isForm=false, auth=true, retry=true} = {}){
+  const headers = {};
+  if(!isForm) headers['Content-Type'] = 'application/json';
+  if(auth){ const t = getAccessToken(); if(t) headers['Authorization'] = 'Bearer '+t; }
+
+  let res;
+  try{
+    res = await fetch(getApiBaseUrl()+path, { method, headers, body: body===undefined ? undefined : (isForm ? body : JSON.stringify(body)) });
+  }catch(netErr){
+    throw new ApiClientError('NETWORK_ERROR', `Can't reach the backend at ${getApiBaseUrl()}. Is it running?`, 0);
+  }
+
+  if(res.status===204) return null;
+
+  let json = null;
+  try{ json = await res.json(); }catch(e){ /* non-JSON response */ }
+
+  if(!res.ok || !json || json.success===false){
+    if(res.status===401 && auth && retry){
+      const refreshed = await tryRefreshToken();
+      if(refreshed) return apiFetch(path, {method, body, isForm, auth, retry:false});
+    }
+    const e = (json && json.error) || {};
+    throw new ApiClientError(e.code || 'ERROR', e.message || `Request failed (${res.status})`, res.status, e.details);
+  }
+  return json;
+}
+
+async function tryRefreshToken(){
+  const rt = getRefreshToken();
+  if(!rt) return false;
+  try{
+    const res = await fetch(getApiBaseUrl()+'/auth/refresh-token', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({refreshToken:rt}) });
+    const json = await res.json();
+    if(res.ok && json.success){ setTokens(json.data.accessToken, null); return true; }
+  }catch(e){ /* fall through */ }
+  clearTokens(); S.userId=null; S.user=null; S.hasDriverProfile=false;
+  if(location.hash !== '#/login') go('#/login');
+  return false;
+}
+
+function toQuery(obj={}){
+  const parts = Object.entries(obj).filter(([,v])=>v!==undefined && v!==null && v!=='').map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v));
+  return parts.length ? '?'+parts.join('&') : '';
+}
+
+/* ======================================================================
+   API — one function per documented endpoint, wired to the real backend
+   ====================================================================== */
+const api = {
+  // --- Auth ---
+  async login(email,password){
+    const json = await apiFetch('/auth/login', {method:'POST', auth:false, body:{email,password}});
+    setTokens(json.data.accessToken, json.data.refreshToken);
+    return json.data;
+  },
+  async register(data){ return (await apiFetch('/auth/register', {method:'POST', auth:false, body:data})).data; },
+  async verifyEmail(email,otp){ return (await apiFetch('/auth/verify-email', {method:'POST', auth:false, body:{email,otp}})).data; },
+  async resendOtp(email,purpose='email_verification'){ return await apiFetch('/auth/resend-otp', {method:'POST', auth:false, body:{email,purpose}}); },
+  async forgotPassword(email){ return await apiFetch('/auth/forgot-password', {method:'POST', auth:false, body:{email}}); },
+  async resetPassword(email,otp,newPassword){ return await apiFetch('/auth/reset-password', {method:'POST', auth:false, body:{email,otp,newPassword}}); },
+  async logout(){ const rt=getRefreshToken(); try{ await apiFetch('/auth/logout', {method:'POST', body:{refreshToken:rt}}); }catch(e){} clearTokens(); },
+
+  // --- Users ---
+  async getMe(){ return (await apiFetch('/users/me')).data; },
+  async updateMe(patch){ return (await apiFetch('/users/me', {method:'PATCH', body:patch})).data; },
+  async getUserById(userId){ return (await apiFetch('/users/'+userId)).data; },
+  async setAvatar(file){
+    const fd = new FormData(); fd.append('image', file);
+    return (await apiFetch('/users/me/profile-picture', {method:'PUT', isForm:true, body:fd})).data;
+  },
+  async deleteMe(){ return await apiFetch('/users/me', {method:'DELETE'}); },
+
+  // --- Driver profile ---
+  async upsertDriverProfile(data){ return (await apiFetch('/drivers/me', {method:'PUT', body:data})).data; },
+  async getDriverProfile(userId){ return (await apiFetch('/drivers/'+userId)).data; },
+
+  // --- Emergency contacts ---
+  async listEmergencyContacts(){ return (await apiFetch('/emergency-contacts')).data; },
+  async addEmergencyContact(data){ return (await apiFetch('/emergency-contacts', {method:'POST', body:data})).data; },
+  async updateEmergencyContact(id,patch){ return (await apiFetch('/emergency-contacts/'+id, {method:'PATCH', body:patch})).data; },
+  async deleteEmergencyContact(id){ return await apiFetch('/emergency-contacts/'+id, {method:'DELETE'}); },
+
+  // --- Routes ---
+  async createRoute(data){ return (await apiFetch('/routes', {method:'POST', body:data})).data; },
+  async listMyRoutes(filters={}){ return (await apiFetch('/routes/me'+toQuery(filters))).data; },
+  async getRoute(id){ return (await apiFetch('/routes/'+id)).data; },
+  async updateRoute(id,patch){ return (await apiFetch('/routes/'+id, {method:'PATCH', body:patch})).data; },
+  async setRouteStatus(id,status){ return (await apiFetch('/routes/'+id+'/status', {method:'PATCH', body:{status}})).data; },
+  async skipRouteDate(id,date){ return (await apiFetch('/routes/'+id+'/skip', {method:'POST', body:{date}})).data; },
+  async deleteRoute(id){ return await apiFetch('/routes/'+id, {method:'DELETE'}); },
+
+  // --- Matching ---
+  async getMatchesForRoute(routeId, params={}){ return (await apiFetch('/routes/'+routeId+'/matches'+toQuery(params))).data; },
+  async getMatch(matchId){ return (await apiFetch('/matches/'+matchId)).data; },
+
+  // --- Ride requests ---
+  async sendRequest(matchId,message){ return (await apiFetch('/matches/'+matchId+'/request', {method:'POST', body:{message}})).data; },
+  async listIncomingRequests(filters={}){ return (await apiFetch('/requests'+toQuery(filters))).data; },
+  async approveRequest(matchId){ return (await apiFetch('/matches/'+matchId+'/approve', {method:'PATCH'})).data; },
+  async declineRequest(matchId,reason){ return (await apiFetch('/matches/'+matchId+'/decline', {method:'PATCH', body:{reason}})).data; },
+
+  // --- Trips ---
+  async listMyTrips(filters={}){ return (await apiFetch('/trips'+toQuery(filters))).data; },
+  async getTrip(id){ return (await apiFetch('/trips/'+id)).data; },
+  async statusPing(id,data){ return await apiFetch('/trips/'+id+'/status-ping', {method:'POST', body:data}); },
+  async completeTrip(id){ return (await apiFetch('/trips/'+id+'/complete', {method:'PATCH'})).data; },
+  async cancelTrip(id,reason){ return (await apiFetch('/trips/'+id+'/cancel', {method:'PATCH', body:{reason}})).data; },
+
+  // --- Cost-split ---
+  async getCostSplit(id){ return (await apiFetch('/trips/'+id+'/cost-split')).data; },
+  async recalculateCostSplit(id,fuelPricePerLiter){ return (await apiFetch('/trips/'+id+'/cost-split/recalculate', {method:'POST', body:{fuelPricePerLiter}})).data; },
+
+  // --- Ratings ---
+  async submitRating(data){ return (await apiFetch('/ratings', {method:'POST', body:data})).data; },
+  async ratingsForUser(userId){ return (await apiFetch('/users/'+userId+'/ratings')).data; },
+
+  // --- Notifications ---
+  async listNotifications(filters={}){ return (await apiFetch('/notifications'+toQuery(filters))).data; },
+  async markNotifRead(id){ return (await apiFetch('/notifications/'+id+'/read', {method:'PATCH'})).data; },
+  async markAllRead(){ return await apiFetch('/notifications/read-all', {method:'PATCH'}); },
+
+  // --- Safety ---
+  async submitSafetyReport(data){ return (await apiFetch('/safety/reports', {method:'POST', body:data})).data; },
+  async shareTripStatus(tripId,emergencyContactId){ return (await apiFetch('/trips/'+tripId+'/share-status', {method:'POST', body:{emergencyContactId}})).data; },
+
+  // --- Admin ---
+  async adminListUsers(filters={}){ return (await apiFetch('/admin/users'+toQuery(filters))).data; },
+  async adminVerifyUser(id){ return (await apiFetch('/admin/users/'+id+'/verify', {method:'PATCH'})).data; },
+  async adminSetUserStatus(id,status,reason){ return (await apiFetch('/admin/users/'+id+'/status', {method:'PATCH', body:{status,reason}})).data; },
+  async adminListReports(filters={}){ return (await apiFetch('/admin/reports'+toQuery(filters))).data; },
+  async adminResolveReport(id,resolution,notes){ return (await apiFetch('/admin/reports/'+id+'/resolve', {method:'PATCH', body:{resolution,notes}})).data; },
+  async adminAnalytics(){ return (await apiFetch('/admin/analytics/overview')).data; },
+};
+
+/* ======================================================================
+   ENRICHMENT HELPERS
+   The real API deliberately hides exact route text from anyone but the
+   route's owner (see API.md §7 note on "match-safe fields"), so trip/match/
+   request cards can't show the counterpart's exact origin & destination —
+   only what the matching endpoints expose (name, rating, timing). These
+   helpers stitch together what IS documented, with light in-memory caching.
+   ====================================================================== */
+let myRouteIdsCache = null;
+async function myRouteIds(){
+  if(myRouteIdsCache) return myRouteIdsCache;
+  const routes = await api.listMyRoutes({limit:100});
+  myRouteIdsCache = new Set(routes.map(r=>r.id));
+  return myRouteIdsCache;
+}
+function invalidateRouteCache(){ myRouteIdsCache = null; routeCache = {}; matchListCache = {}; }
+let routeCache = {};
+async function getRouteCached(id){
+  if(routeCache[id]) return routeCache[id];
+  const r = await api.getRoute(id);
+  routeCache[id] = r;
+  return r;
+}
+let matchListCache = {};
+async function getMatchesForRouteCached(routeId){
+  if(matchListCache[routeId]) return matchListCache[routeId];
+  const list = await api.getMatchesForRoute(routeId, {limit:100});
+  matchListCache[routeId] = list;
+  return list;
+}
+// GET /routes/me only returns {id, role, daysOfWeek, departureTime, status} per API.md —
+// origin/destination need a separate GET /routes/:id per route (fine: these are all
+// routes we own, so that call is always allowed).
+async function enrichRouteList(routes){
+  return Promise.all(routes.map(async r=>{
+    try{ const full = await getRouteCached(r.id); return {...r, origin:full.origin, destination:full.destination}; }
+    catch(e){ return {...r, origin:{label:'Unknown'}, destination:{label:'Unknown'}}; }
+  }));
+}
+let userCache = {};
+async function getUserCached(userId){
+  if(!userId) return null;
+  if(userCache[userId]) return userCache[userId];
+  try{ const u = await api.getUserById(userId); userCache[userId]=u; return u; }
+  catch(e){ return null; }
+}
+async function enrichTrip(t){
+  const match = await api.getMatch(t.matchId);
+  const mine = await myRouteIds();
+  const iAmDriver = mine.has(match.driverRouteId);
+  const myRouteId = iAmDriver ? match.driverRouteId : match.riderRouteId;
+  let myRoute = null, counterpart = null;
+  try{ myRoute = await getRouteCached(myRouteId); }catch(e){ /* ignore */ }
+  try{
+    const candidates = await getMatchesForRouteCached(myRouteId);
+    const found = candidates.find(c=>c.matchId===t.matchId);
+    if(found && found.counterpartRoute) counterpart = found.counterpartRoute;
+  }catch(e){ /* ignore */ }
+  const other = counterpart || {userId:null, name: iAmDriver?'Rider':'Driver', rating:0};
+  return {
+    ...t,
+    iAmDriver,
+    driverRoute: myRoute ? {origin:myRoute.origin.label, destination:myRoute.destination.label, departureTime:myRoute.departureTime} : {origin:'Your route', destination:'', departureTime:other.departureTime||'—'},
+    driver: iAmDriver ? {userId:S.user.id, name:S.user.name, rating:S.user.rating} : {userId:other.userId, name:other.name, rating:other.rating},
+    rider: iAmDriver ? {userId:other.userId, name:other.name, rating:other.rating} : {userId:S.user.id, name:S.user.name, rating:S.user.rating},
+  };
+}
+
+/* ======================================================================
+   APP STATE
+   ====================================================================== */
+const S = {
+  theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light',
+  userId: null,
+  user: null,
+  hasDriverProfile: false,
+  route: '#/login',
+  loading:false,
+};
+document.documentElement.setAttribute('data-theme', S.theme);
+
+function toast(msg, isErr=false){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast'+(isErr?' err':'');
+  el.innerHTML = `${icon(isErr?'circle-x':'circle-check','icon-sm')}<span>${escapeHtml(msg)}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3200);
+}
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function icon(name, cls='icon'){ return `<i data-lucide="${name}" class="${cls}"></i>`; }
+function initIcons(){ if(window.lucide) lucide.createIcons(); }
+function initials(name){ return (name||'?').split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(); }
+function avatarColor(seed){
+  const colors=['#DB9330','#12735F','#7B5EA7','#C94A3C','#3D6FB0'];
+  let h=0; for(const c of (seed||'')) h+=c.charCodeAt(0);
+  return colors[h%colors.length];
+}
+function fmtDate(iso){ const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+function fmtDateTime(iso){ const d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function timeAgo(iso){
+  const s = Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
+}
+const DAY_LABELS = {mon:'M',tue:'T',wed:'W',thu:'T',fri:'F',sat:'S',sun:'S'};
+const DAY_ORDER = ['mon','tue','wed','thu','fri','sat','sun'];
+function daysPretty(arr){ return DAY_ORDER.filter(d=>arr.includes(d)).map(d=>DAY_LABELS[d]).join(''); }
+function statusBadge(status){
+  const map = {
+    active:['b-teal','active'], approved:['b-teal','approved'], upcoming:['b-teal','upcoming'], completed:['b-grey','completed'], resolved:['b-teal','resolved'],
+    requested:['b-amber','requested'], suggested:['b-amber','suggested'], open:['b-amber','open'], reviewing:['b-amber','reviewing'],
+    declined:['b-coral','declined'], cancelled:['b-coral','cancelled'], dismissed:['b-grey','dismissed'], paused:['b-grey','paused'], archived:['b-grey','archived'],
+  };
+  const [cls,label] = map[status] || ['b-grey',status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function currentUser(){ return S.user; }
+function isDriver(){ return S.hasDriverProfile; }
+function isAdmin(u){ return u && u.role==='admin'; }
+
+/* ======================================================================
+   ROUTER
+   ====================================================================== */
+window.addEventListener('hashchange', ()=>{ S.route = location.hash || '#/login'; render(); });
+
+function go(hash){ location.hash = hash; }
+
+async function restoreSession(){
+  if(S.user) return true;
+  if(!getAccessToken()) return false;
+  try{
+    S.user = await api.getMe();
+    S.userId = S.user.id;
+    try{ S.hasDriverProfile = !!(await api.getDriverProfile(S.user.id)); }catch(e){ S.hasDriverProfile = false; }
+    return true;
+  }catch(e){
+    clearTokens(); S.userId=null; S.user=null;
+    return false;
+  }
+}
+
+async function render(){
+  const app = document.getElementById('app');
+  const path = (location.hash || '#/login').replace(/^#/,'');
+  const [seg, id, sub] = path.split('/').filter(Boolean);
+
+  if(['login','register','verify-otp'].includes(seg)){
+    app.innerHTML = renderAuthShell(seg);
+    initIcons(); bindAuthEvents(seg);
+    return;
+  }
+
+  const ok = await restoreSession();
+  if(!ok){ location.hash='#/login'; return; }
+
+  app.innerHTML = `<div class="loading-page"><div class="spinner spinner-dark"></div> Loading…</div>`;
+  let unread=0, pending=0;
+  try{
+    const [notifs, reqs] = await Promise.all([
+      api.listNotifications({unread:true, limit:50}).catch(()=>[]),
+      isDriver() ? api.listIncomingRequests({status:'requested', limit:50}).catch(()=>[]) : Promise.resolve([]),
+    ]);
+    unread = notifs.length;
+    pending = reqs.length;
+  }catch(e){ /* non-fatal — badges just show 0 */ }
+
+  app.innerHTML = renderAppShell(seg, id, {unread, pending});
+  initIcons();
+  bindShellEvents();
+  await renderView(seg, id, sub);
+}
+
+/* ======================================================================
+   AUTH VIEWS
+   ====================================================================== */
+function zigzagSvg(){
+  return `<svg width="72" height="15" viewBox="0 0 72 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12L9.5 2.5L18 12L26.5 2.5L35 12L43.5 2.5L52 12L60.5 2.5L69 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function renderAuthShell(view){
+  return `
+  <div class="auth-shell">
+    <div class="auth-visual">
+      <span class="zigzag" style="top:34px; right:40px;">${zigzagSvg()}</span>
+      <span class="zigzag" style="bottom:30px; left:48px;">${zigzagSvg()}</span>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="brand" style="padding-left:0; padding-bottom:0;">
+          <div class="mark">${icon('car','icon-sm')}</div>
+          <b>CarpoolCampus</b>
+        </div>
+        <div class="tabs" style="border:none; margin:0; gap:0;">
+          <div class="tab active" style="margin-right:20px; color:var(--ink); border-color:var(--ink);">Highlights</div>
+          <div class="tab" style="margin-right:0; color:var(--ink-faint);">Safety</div>
+        </div>
+      </div>
+      <div>
+        <h1 style="font-size:clamp(28px,4vw,38px); max-width:380px; line-height:1.16;">Best rides,<br>split smart.</h1>
+        <p style="color:var(--ink-soft); max-width:340px; margin-top:12px; font-size:14px;">Match with drivers and riders on your own route. Verified campus accounts only.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <a class="btn btn-primary" href="#/register">Get started</a>
+          <a class="btn" style="background:transparent; border:1.5px solid var(--ink); color:var(--ink);" href="#/login">How it works</a>
+        </div>
+        <div class="board" style="margin-top:26px; max-width:400px;">
+          <div class="board-head"><span>MODEL TOWN → GC UNIVERSITY</span><span>MON–FRI</span></div>
+          <div class="board-row"><span class="dot" style="background:var(--teal);"></span><span class="board-time">08:00</span><div class="board-route">Danish Ahmed <small>Toyota Corolla · 3 seats</small></div><span class="board-status" style="background:var(--teal-soft);color:var(--teal);">matched</span></div>
+          <div class="board-row"><span class="dot" style="background:var(--amber);"></span><span class="board-time">08:15</span><div class="board-route">Hamza Iqbal <small>requested a seat</small></div><span class="board-status" style="background:var(--amber-soft);color:var(--amber-ink);">pending</span></div>
+          <div class="board-row"><span class="dot" style="background:var(--ink-faint);"></span><span class="board-time">07:50</span><div class="board-route">Sana Malik <small>overlap 61%</small></div><span class="board-status" style="background:var(--border-soft);color:var(--ink-faint);">suggested</span></div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--ink-soft);">Rs. 118.5 average cost per rider this week · 68% of routes get a match</p>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:center; padding:32px;">
+      <div style="width:100%; max-width:380px;">
+        ${view==='login' ? authLogin() : view==='register' ? authRegister() : authVerify()}
+      </div>
+    </div>
+  </div>`;
+}
+function authLogin(){
+  return `
+  <h2 style="font-size:22px; margin-bottom:4px;">Welcome back</h2>
+  <p style="color:var(--ink-faint); font-size:13.5px; margin-bottom:24px;">Log in with your campus account.</p>
+  <form id="loginForm">
+    <div class="field"><label>Campus email</label><input type="email" id="loginEmail" placeholder="you@campus.edu" required></div>
+    <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" required></div>
+    <div id="loginErr"></div>
+    <button class="btn btn-primary btn-block" type="submit" id="loginBtn">Log in</button>
+  </form>
+  <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--ink-faint);">
+    <a class="link-text" href="#/register">Create an account</a>
+  </p>
+  <div class="demo-note">${icon('info','icon-sm')}<span>Connecting to <span class="mono">${escapeHtml(getApiBaseUrl())}</span>. First time? Run <span class="mono">npm run seed:admin</span> in the backend to create an admin login, or register a new account below.</span></div>`;
+}
+function authRegister(){
+  return `
+  <h2 style="font-size:22px; margin-bottom:4px;">Create your account</h2>
+  <p style="color:var(--ink-faint); font-size:13.5px; margin-bottom:24px;">Use your approved campus email — we'll send a verification code.</p>
+  <form id="registerForm">
+    <div class="field"><label>Full name</label><input type="text" id="regName" placeholder="Your name" required></div>
+    <div class="field"><label>Campus email</label><input type="email" id="regEmail" placeholder="you@campus.edu" required></div>
+    <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="At least 8 characters" required></div>
+    <div class="field"><label>I'm joining as a</label>
+      <div class="radio-row">
+        <div class="radio-chip sel" data-role="rider">${icon('user','icon-sm')} Rider</div>
+        <div class="radio-chip" data-role="driver">${icon('car','icon-sm')} Driver</div>
+      </div>
+      <input type="hidden" id="regRole" value="rider">
+    </div>
+    <div id="regErr"></div>
+    <button class="btn btn-primary btn-block" type="submit" id="regBtn">Send verification code</button>
+  </form>
+  <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--ink-faint);">Already have an account? <a class="link-text" href="#/login">Log in</a></p>`;
+}
+function authVerify(){
+  const email = sessionEmail || '';
+  return `
+  <h2 style="font-size:22px; margin-bottom:4px;">Check your inbox</h2>
+  <p style="color:var(--ink-faint); font-size:13.5px; margin-bottom:24px;">We sent a 6-digit code to <b style="color:var(--ink);">${escapeHtml(email)}</b>.</p>
+  <form id="otpForm">
+    <div class="field"><label>Verification code</label><input type="text" maxlength="6" id="otpCode" placeholder="482913" style="letter-spacing:.3em; text-align:center; font-family:var(--ff-mono); font-size:18px;" required></div>
+    <div id="otpErr"></div>
+    <button class="btn btn-primary btn-block" type="submit" id="otpBtn">Verify & continue</button>
+  </form>
+  <p style="text-align:center; margin-top:16px; font-size:13px;"><a class="link-text" id="resendOtp">Resend code</a></p>
+  <div class="demo-note">${icon('info','icon-sm')}<span>The code is emailed via the backend's configured SMTP account. If registration failed with a server error instead of reaching this screen, SMTP probably isn't set up in the backend's <span class="mono">.env</span> yet — check the backend's terminal output.</span></div>`;
+}
+let sessionEmail = '';
+function bindAuthEvents(view){
+  document.querySelectorAll('.radio-chip[data-role]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('.radio-chip[data-role]').forEach(e=>e.classList.remove('sel'));
+      el.classList.add('sel'); document.getElementById('regRole').value = el.dataset.role;
+    });
+  });
+  const loginForm = document.getElementById('loginForm');
+  if(loginForm) loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn=document.getElementById('loginBtn'); const errBox=document.getElementById('loginErr');
+    errBox.innerHTML=''; btn.disabled=true; btn.innerHTML=`<div class="spinner"></div> Logging in…`;
+    try{
+      const res = await api.login(document.getElementById('loginEmail').value.trim(), document.getElementById('loginPassword').value);
+      S.userId = res.user.id;
+      toast(`Welcome back, ${res.user.name.split(' ')[0]}!`);
+      go('#/dashboard');
+    }catch(ex){
+      errBox.innerHTML = `<div class="err-msg" style="margin-bottom:12px;">${escapeHtml(ex.message)}</div>`;
+      btn.disabled=false; btn.innerHTML='Log in';
+    }
+  });
+  const regForm = document.getElementById('registerForm');
+  if(regForm) regForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn=document.getElementById('regBtn'); const errBox=document.getElementById('regErr');
+    errBox.innerHTML=''; btn.disabled=true; btn.innerHTML=`<div class="spinner"></div> Sending…`;
+    try{
+      const data = {name:document.getElementById('regName').value.trim(), email:document.getElementById('regEmail').value.trim(), password:document.getElementById('regPassword').value, role:document.getElementById('regRole').value};
+      await api.register(data);
+      sessionEmail = data.email;
+      toast('Verification code sent.');
+      go('#/verify-otp');
+    }catch(ex){
+      errBox.innerHTML = `<div class="err-msg" style="margin-bottom:12px;">${escapeHtml(ex.message)}</div>`;
+      btn.disabled=false; btn.innerHTML='Send verification code';
+    }
+  });
+  const otpForm = document.getElementById('otpForm');
+  if(otpForm) otpForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn=document.getElementById('otpBtn'); const errBox=document.getElementById('otpErr');
+    errBox.innerHTML=''; btn.disabled=true; btn.innerHTML=`<div class="spinner"></div> Verifying…`;
+    try{
+      await api.verifyEmail(sessionEmail, document.getElementById('otpCode').value.trim());
+      toast('Email verified — you can log in now.');
+      go('#/login');
+    }catch(ex){
+      errBox.innerHTML = `<div class="err-msg" style="margin-bottom:12px;">${escapeHtml(ex.message)}</div>`;
+      btn.disabled=false; btn.innerHTML='Verify & continue';
+    }
+  });
+  const resend = document.getElementById('resendOtp');
+  if(resend) resend.addEventListener('click', async (e)=>{ e.preventDefault(); try{ await api.resendOtp(sessionEmail); toast('A new code was sent.'); }catch(ex){ toast(ex.message,true); } });
+}
+
+/* ======================================================================
+   APP SHELL (post-login)
+   ====================================================================== */
+const NAV_ITEMS = [
+  {key:'dashboard', label:'Dashboard', icon:'layout-dashboard'},
+  {key:'routes', label:'Routes', icon:'route'},
+  {key:'matches', label:'Matches', icon:'sparkles'},
+  {key:'requests', label:'Requests', icon:'inbox', driverOnly:true},
+  {key:'trips', label:'Trips', icon:'navigation'},
+  {key:'notifications', label:'Notifications', icon:'bell'},
+  {key:'profile', label:'Profile', icon:'user'},
+  {key:'admin', label:'Admin', icon:'shield-check', adminOnly:true},
+];
+function renderAppShell(activeSeg, id, counts={unread:0,pending:0}){
+  const u = currentUser();
+  const {unread, pending} = counts;
+  const items = NAV_ITEMS.filter(n=> (!n.driverOnly || isDriver()) && (!n.adminOnly || isAdmin(u)));
+  const titleMap = {dashboard:'Dashboard', routes:'Routes', matches:'Find matches', requests:'Ride requests', trips:'Trips', notifications:'Notifications', profile:'Your profile', admin:'Admin console'};
+  const subMap = {dashboard:'Your carpool at a glance', routes:'Post and manage your recurring routes', matches:'Ranked candidates for your route', requests:'Incoming seat requests from riders', trips:'Upcoming and past trips', notifications:'Everything that needs your attention', profile:'Account, vehicle & safety settings', admin:'Users, reports & platform health'};
+
+  return `
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">${icon('car','icon-sm')}</div>
+        <b>CarpoolCampus</b>
+      </div>
+      <nav class="nav">
+        ${items.map(n=>`
+          <button class="nav-item ${activeSeg===n.key?'active':''}" data-nav="${n.key}">
+            ${icon(n.icon,'icon-sm')}<span>${n.label}</span>
+            ${n.key==='notifications' && unread>0 ? `<span class="badge-count">${unread}</span>`:''}
+            ${n.key==='requests' && pending>0 ? `<span class="badge-count">${pending}</span>`:''}
+          </button>`).join('')}
+      </nav>
+      <div class="nav-foot">
+        <div class="nav-user">
+          ${avatarHtml(u,30)}
+          <div><b>${escapeHtml(u.name)}</b><span>${(isAdmin(u)?['admin']:isDriver()?['driver','rider']:['rider']).map(r=>r[0].toUpperCase()+r.slice(1)).join(' · ')}</span></div>
+        </div>
+        <button class="nav-item" id="logoutBtn" style="margin-top:6px;">${icon('log-out','icon-sm')}<span>Log out</span></button>
+      </div>
+    </aside>
+    <div class="main-col">
+      <header class="topbar">
+        <button class="icon-btn hamburger" id="mobileNavBtn">${icon('menu','icon-sm')}</button>
+        <div><h1>${titleMap[activeSeg]||'CarpoolCampus'}</h1><div class="sub">${subMap[activeSeg]||''}</div></div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="themeToggle" title="Toggle theme">${icon(S.theme==='dark'?'sun':'moon','icon-sm')}</button>
+          <button class="icon-btn" id="bellBtn" title="Notifications">${icon('bell','icon-sm')}${unread>0?'<span class="dot-badge"></span>':''}</button>
+        </div>
+      </header>
+      <main class="content" id="viewRoot">
+        <div class="loading-page"><div class="spinner spinner-dark"></div> Loading…</div>
+      </main>
+    </div>
+    <nav class="bottom-nav">
+      ${items.slice(0,5).map(n=>`
+        <button class="bnav-item ${activeSeg===n.key?'active':''}" data-nav="${n.key}">
+          ${icon(n.icon,'icon-sm')}<span>${n.label}</span>
+          ${(n.key==='notifications' && unread>0)||(n.key==='requests' && pending>0) ? '<span class="badge-count"></span>':''}
+        </button>`).join('')}
+    </nav>
+  </div>`;
+}
+function avatarHtml(u, size=36){
+  if(u.profilePictureUrl) return `<div class="avatar" style="width:${size}px;height:${size}px;"><img src="${u.profilePictureUrl}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+  return `<div class="avatar" style="width:${size}px;height:${size}px; background:${avatarColor(u.name)}; font-size:${size*0.38}px;">${initials(u.name)}</div>`;
+}
+function bindShellEvents(){
+  document.querySelectorAll('[data-nav]').forEach(el=> el.addEventListener('click', ()=> go('#/'+el.dataset.nav)));
+  document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ S.userId=null; go('#/login'); toast('Logged out.'); });
+  document.getElementById('themeToggle')?.addEventListener('click', ()=>{
+    S.theme = S.theme==='dark' ? 'light':'dark';
+    document.documentElement.setAttribute('data-theme', S.theme);
+    document.getElementById('themeToggle').innerHTML = icon(S.theme==='dark'?'sun':'moon','icon-sm');
+    initIcons();
+  });
+  document.getElementById('bellBtn')?.addEventListener('click', ()=> go('#/notifications'));
+  document.getElementById('mobileNavBtn')?.addEventListener('click', ()=> openMobileNav());
+}
+function openMobileNav(){
+  const u = currentUser();
+  const items = NAV_ITEMS.filter(n=> (!n.driverOnly || isDriver(u)) && (!n.adminOnly || isAdmin(u)));
+  openModal(`
+    <div class="modal-head"><h3>Menu</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      ${items.map(n=>`<button class="nav-item" style="color:var(--ink);" data-nav="${n.key}" data-close-nav>${icon(n.icon,'icon-sm')}<span>${n.label}</span></button>`).join('')}
+    </div>
+  `);
+  document.querySelectorAll('[data-close-nav]').forEach(el=>el.addEventListener('click', ()=>{ go('#/'+el.dataset.nav); closeModal(); }));
+}
+
+/* ======================================================================
+   MODAL / helpers
+   ====================================================================== */
+function openModal(innerHtml, opts={}){
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay'; overlay.id='activeModal';
+  overlay.innerHTML = `<div class="modal" style="max-width:${opts.width||460}px;">${innerHtml}</div>`;
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+  document.body.appendChild(overlay);
+  overlay.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', closeModal));
+  initIcons();
+  return overlay;
+}
+function closeModal(){ document.getElementById('activeModal')?.remove(); }
+
+/* ======================================================================
+   VIEW ROUTER
+   ====================================================================== */
+async function renderView(seg, id, sub){
+  const root = document.getElementById('viewRoot');
+  const u = currentUser();
+  try{
+    if(seg==='dashboard') return await viewDashboard(root,u);
+    if(seg==='routes' && id==='new') return viewRouteForm(root,u);
+    if(seg==='routes') return await viewRoutes(root,u);
+    if(seg==='matches') return await viewMatches(root,u,id);
+    if(seg==='requests') return await viewRequests(root,u);
+    if(seg==='trips' && id) return await viewTripDetail(root,u,id);
+    if(seg==='trips') return await viewTrips(root,u);
+    if(seg==='notifications') return await viewNotifications(root,u);
+    if(seg==='profile') return await viewProfile(root,u);
+    if(seg==='admin') return await viewAdmin(root,u, id||'users');
+    root.innerHTML = emptyState('compass','Nothing here','Pick a section from the menu.');
+  }catch(ex){
+    root.innerHTML = emptyState('alert-triangle', 'Something went wrong', ex.message||'Please try again.');
+    initIcons();
+  }
+}
+function emptyState(iconName,title,desc,actionHtml=''){
+  return `<div class="empty">${icon(iconName,'icon-lg')}<h3>${escapeHtml(title)}</h3><p>${escapeHtml(desc)}</p>${actionHtml}</div>`;
+}
+
+/* ---------- DASHBOARD ---------- */
+async function viewDashboard(root,u){
+  const [routesRaw, rawTrips, notifs] = await Promise.all([api.listMyRoutes(), api.listMyTrips(), api.listNotifications()]);
+  const routes = await enrichRouteList(routesRaw);
+  const upcomingRaw = rawTrips.filter(t=>t.status==='upcoming').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const upcoming = rawTrips.filter(t=>t.status==='upcoming');
+  const next = upcomingRaw[0] ? await enrichTrip(upcomingRaw[0]) : null;
+  const activeRoutes = routes.filter(r=>r.status==='active');
+  const recentNotifs = notifs.slice(0,4);
+  const pendingCount = isDriver() ? (await api.listIncomingRequests({status:'requested', limit:50}).catch(()=>[])).length : 0;
+
+  root.innerHTML = `
+    ${next ? `
+    <div class="hero-card">
+      <span class="zigzag" style="top:18px; right:22px;">${zigzagSvg()}</span>
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Next trip · ${fmtDate(next.date)}</div>
+          <div class="hero-route">${escapeHtml(next.driverRoute.origin)} <span class="arrow">${icon('arrow-right','icon-sm')}</span> ${escapeHtml(next.driverRoute.destination)}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-go="#/trips/${next.id}">View trip</button>
+      </div>
+      <div class="hero-meta">
+        <div><b class="mono">${next.driverRoute.departureTime}</b><span>Departure</span></div>
+        <div><b class="mono">${u.id===next.driver.userId ? 'You' : next.driver.name.split(' ')[0]}</b><span>Driver</span></div>
+        <div><b class="mono">${next.costPerRider!=null?'Rs. '+next.costPerRider:'—'}</b><span>Your share</span></div>
+      </div>
+    </div>` : `
+    <div class="hero-card">
+      <span class="zigzag" style="top:18px; right:22px;">${zigzagSvg()}</span>
+      <div class="eyebrow">No trip scheduled yet</div>
+      <div class="hero-route" style="font-size:19px;">Post a route or check your matches to get moving.</div>
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; position:relative; z-index:1;">
+        <button class="btn btn-primary btn-sm" data-go="#/routes/new">${icon('plus','icon-sm')} Post a route</button>
+        <button class="btn btn-sm" style="background:transparent; border:1.5px solid var(--ink); color:var(--ink);" data-go="#/routes">View my routes</button>
+      </div>
+    </div>`}
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--teal-soft); color:var(--teal);">${icon('route','icon-sm')}</div><b>${activeRoutes.length}</b><span>Active routes</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--amber-soft); color:var(--amber-ink);">${icon('inbox','icon-sm')}</div><b>${pendingCount}</b><span>Pending requests</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--teal-soft); color:var(--teal);">${icon('navigation','icon-sm')}</div><b>${upcoming.length}</b><span>Upcoming trips</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--coral-soft); color:var(--coral);">${icon('star','icon-sm')}</div><b>${u.rating||'—'}</b><span>Your rating</span></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:22px;" class="dash-grid">
+      <div>
+        <div class="section-title"><h2>Your routes</h2><a class="link-text" href="#/routes">See all</a></div>
+        ${routes.length ? `<div class="list">${routes.slice(0,4).map(r=>routeRow(r)).join('')}</div>` : emptyState('route','No routes yet','Post your first commute to start matching.', `<button class="btn btn-primary btn-sm" data-go="#/routes/new">${icon('plus','icon-sm')} Post a route</button>`)}
+      </div>
+      <div>
+        <div class="section-title"><h2>Recent activity</h2><a class="link-text" href="#/notifications">See all</a></div>
+        <div class="list">
+          ${recentNotifs.length ? recentNotifs.map(n=>notifRow(n)).join('') : emptyState('bell','All quiet','Nothing new right now.')}
+        </div>
+      </div>
+    </div>
+    <style>@media (max-width:900px){ .dash-grid{grid-template-columns:1fr !important;} }</style>
+  `;
+  initIcons();
+  bindGoButtons(root);
+  root.querySelectorAll('.notif-item').forEach(el=> el.addEventListener('click', ()=> handleNotifClick(el)));
+}
+function bindGoButtons(root){ root.querySelectorAll('[data-go]').forEach(el=> el.addEventListener('click', ()=> go(el.dataset.go))); }
+
+function routeRow(r){
+  const lineColor = r.status==='active' ? 'var(--teal)' : r.status==='paused' ? 'var(--amber)' : 'var(--border)';
+  return `
+  <div class="row" data-go="#/routes">
+    <span class="row-line" style="background:${lineColor};"></span>
+    <span class="row-time">${r.departureTime}</span>
+    <div class="row-main">
+      <div class="title">${escapeHtml(r.origin.label)} <span style="color:var(--ink-faint);">${icon('arrow-right','icon-sm')}</span> ${escapeHtml(r.destination.label)}</div>
+      <div class="sub"><span class="mono">${daysPretty(r.daysOfWeek)}</span><span>${r.role==='driver'?'Driving':'Riding'}</span></div>
+    </div>
+    ${statusBadge(r.status)}
+  </div>`;
+}
+function notifTypeIcon(type){
+  return {ride_request_received:['inbox','var(--amber-ink)','var(--amber-soft)'], ride_request_approved:['check','var(--teal)','var(--teal-soft)'], ride_request_declined:['x','var(--coral)','var(--coral-soft)'], trip_status_ping:['navigation','var(--teal)','var(--teal-soft)']}[type] || ['bell','var(--ink-faint)','var(--border-soft)'];
+}
+function notifRow(n){
+  const [ic,fg,bg] = notifTypeIcon(n.type);
+  return `<div class="notif-item ${n.read?'':'unread'}" data-id="${n.id}" data-read="${n.read}" data-trip-id="${n.meta?.tripId||''}" data-match-id="${n.meta?.matchId||''}">
+    <div class="notif-ic" style="background:${bg}; color:${fg};">${icon(ic,'icon-sm')}</div>
+    <div style="flex:1;"><p>${escapeHtml(n.message)}</p><time>${timeAgo(n.createdAt)}</time></div>
+  </div>`;
+}
+async function handleNotifClick(el){
+  const {id, read, tripId, matchId} = el.dataset;
+  if(read==='false'){ try{ await api.markNotifRead(id); }catch(e){} }
+  if(tripId) go('#/trips/'+tripId);
+  else if(matchId) go('#/requests');
+  else render();
+}
+
+/* ---------- ROUTES ---------- */
+let routesTab = 'all';
+async function viewRoutes(root,u){
+  const routesRaw = await api.listMyRoutes();
+  const routes = await enrichRouteList(routesRaw);
+  const filtered = routesTab==='all' ? routes : routes.filter(r=>r.role===routesTab);
+  root.innerHTML = `
+    <div class="section-title">
+      <div class="tabs" style="border:none; margin:0;">
+        <div class="tab ${routesTab==='all'?'active':''}" data-tab="all">All</div>
+        <div class="tab ${routesTab==='driver'?'active':''}" data-tab="driver">Driving</div>
+        <div class="tab ${routesTab==='rider'?'active':''}" data-tab="rider">Riding</div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-go="#/routes/new">${icon('plus','icon-sm')} Post a route</button>
+    </div>
+    ${filtered.length ? `<div class="list">${filtered.map(r=>routeRowFull(r)).join('')}</div>` : emptyState('route','No routes here','Post a route to start getting matched with drivers or riders.', `<button class="btn btn-primary btn-sm" data-go="#/routes/new">${icon('plus','icon-sm')} Post a route</button>`)}
+  `;
+  initIcons(); bindGoButtons(root);
+  root.querySelectorAll('[data-tab]').forEach(el=> el.addEventListener('click', ()=>{ routesTab=el.dataset.tab; viewRoutes(root,u); }));
+  root.querySelectorAll('[data-matches]').forEach(el=> el.addEventListener('click',(e)=>{ e.stopPropagation(); go('#/matches/'+el.dataset.matches); }));
+  root.querySelectorAll('[data-toggle-status]').forEach(el=> el.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const newStatus = el.dataset.currentStatus==='active' ? 'paused' : 'active';
+    try{ await api.setRouteStatus(el.dataset.toggleStatus, newStatus); invalidateRouteCache(); toast(`Route ${newStatus}.`); viewRoutes(root,u); }
+    catch(ex){ toast(ex.message,true); }
+  }));
+  root.querySelectorAll('[data-delete-route]').forEach(el=> el.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    try{ await api.deleteRoute(el.dataset.deleteRoute); invalidateRouteCache(); toast('Route deleted.'); viewRoutes(root,u); }
+    catch(ex){ toast(ex.message,true); }
+  }));
+}
+function routeRowFull(r){
+  const lineColor = r.status==='active' ? 'var(--teal)' : r.status==='paused' ? 'var(--amber)' : 'var(--border)';
+  return `
+  <div class="row">
+    <span class="row-line" style="background:${lineColor};"></span>
+    <span class="row-time">${r.departureTime}</span>
+    <div class="row-main">
+      <div class="title">${escapeHtml(r.origin.label)} <span style="color:var(--ink-faint);">${icon('arrow-right','icon-sm')}</span> ${escapeHtml(r.destination.label)} ${statusBadge(r.status)}</div>
+      <div class="sub"><span class="mono">${daysPretty(r.daysOfWeek)}</span><span>${r.role==='driver'?'Driving':'Riding'}</span></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn btn-ghost btn-sm" data-matches="${r.id}">${icon('sparkles','icon-sm')} Matches</button>
+      <button class="icon-btn" data-toggle-status="${r.id}" data-current-status="${r.status}" title="${r.status==='active'?'Pause':'Resume'}">${icon(r.status==='active'?'pause':'play','icon-sm')}</button>
+      <button class="icon-btn" data-delete-route="${r.id}" title="Delete">${icon('trash-2','icon-sm')}</button>
+    </div>
+  </div>`;
+}
+
+function viewRouteForm(root,u){
+  root.innerHTML = `
+  <div style="max-width:560px;">
+    <div class="card">
+      <h2 style="font-size:17px; margin-bottom:18px;">Post a recurring route</h2>
+      <div class="field"><label>I'll be</label>
+        <div class="radio-row">
+          <div class="radio-chip sel" data-frole="rider">${icon('user','icon-sm')} Riding</div>
+          <div class="radio-chip" data-frole="driver">${icon('car','icon-sm')} Driving</div>
+        </div>
+      </div>
+      <div id="driverProfileNudge"></div>
+      <div class="field"><label>From</label><input type="text" id="fOrigin" placeholder="e.g. Model Town, Gujranwala"></div>
+      <div class="form-grid-2">
+        <div class="field"><label>Origin latitude</label><input type="number" step="any" id="fOriginLat" value="32.1877"></div>
+        <div class="field"><label>Origin longitude</label><input type="number" step="any" id="fOriginLng" value="74.1945"></div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" id="useMyLocation" style="margin-bottom:16px;">${icon('map-pin','icon-sm')} Use my current location</button>
+      <div class="field"><label>To</label><input type="text" id="fDest" placeholder="e.g. GC University Campus"></div>
+      <div class="form-grid-2">
+        <div class="field"><label>Destination latitude</label><input type="number" step="any" id="fDestLat" value="32.1610"></div>
+        <div class="field"><label>Destination longitude</label><input type="number" step="any" id="fDestLng" value="74.2020"></div>
+      </div>
+      <div class="field hint" style="margin-top:-8px;">Tip: right-click a point on Google Maps and pick the coordinates to copy exact lat/lng.</div>
+      <div class="field"><label>Days of week</label>
+        <div class="day-row">
+          ${DAY_ORDER.map(d=>`<button type="button" class="day-chip ${['mon','tue','wed','thu','fri'].includes(d)?'sel':''}" data-day="${d}">${DAY_LABELS[d]}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Departure time</label><input type="time" id="fTime" value="08:00"></div>
+      <div id="formErr"></div>
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <button class="btn btn-primary" id="submitRoute">${icon('plus','icon-sm')} Post route</button>
+        <button class="btn btn-ghost" data-go="#/routes">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  initIcons(); bindGoButtons(root);
+  let role = 'rider';
+  const selectedDays = new Set(['mon','tue','wed','thu','fri']);
+  function refreshNudge(){
+    document.getElementById('driverProfileNudge').innerHTML = (role==='driver' && !S.hasDriverProfile) ? `
+      <div class="demo-note" style="border-color:var(--amber);">${icon('alert-triangle','icon-sm')}<span>You need a driver profile before posting a driver route. <a class="link-text" id="addDriverProfileLink">Add vehicle details</a></span></div>` : '';
+    if(document.getElementById('addDriverProfileLink')) document.getElementById('addDriverProfileLink').addEventListener('click', ()=> openDriverProfileModal(u, refreshNudge));
+  }
+  refreshNudge();
+  document.getElementById('useMyLocation').addEventListener('click', ()=>{
+    if(!navigator.geolocation){ toast('Geolocation not available in this browser.', true); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos)=>{ document.getElementById('fOriginLat').value = pos.coords.latitude.toFixed(6); document.getElementById('fOriginLng').value = pos.coords.longitude.toFixed(6); toast('Location filled in.'); },
+      ()=> toast("Couldn't get your location — enter coordinates manually.", true)
+    );
+  });
+  root.querySelectorAll('[data-frole]').forEach(el=> el.addEventListener('click', ()=>{
+    role = el.dataset.frole;
+    root.querySelectorAll('[data-frole]').forEach(e=>e.classList.remove('sel')); el.classList.add('sel');
+    refreshNudge();
+  }));
+  root.querySelectorAll('[data-day]').forEach(el=> el.addEventListener('click', ()=>{
+    const d = el.dataset.day;
+    if(selectedDays.has(d)){ selectedDays.delete(d); el.classList.remove('sel'); } else { selectedDays.add(d); el.classList.add('sel'); }
+  }));
+  document.getElementById('submitRoute').addEventListener('click', async ()=>{
+    const btn = document.getElementById('submitRoute'); const errBox = document.getElementById('formErr');
+    errBox.innerHTML='';
+    const origin = document.getElementById('fOrigin').value.trim();
+    const dest = document.getElementById('fDest').value.trim();
+    const time = document.getElementById('fTime').value;
+    if(!origin || !dest){ errBox.innerHTML = `<div class="err-msg">Please fill in both locations.</div>`; return; }
+    if(selectedDays.size===0){ errBox.innerHTML = `<div class="err-msg">Pick at least one day.</div>`; return; }
+    btn.disabled=true; btn.innerHTML = `<div class="spinner"></div> Posting…`;
+    try{
+      await api.createRoute({
+        role,
+        origin:{label:origin, lat:Number(document.getElementById('fOriginLat').value), lng:Number(document.getElementById('fOriginLng').value)},
+        destination:{label:dest, lat:Number(document.getElementById('fDestLat').value), lng:Number(document.getElementById('fDestLng').value)},
+        daysOfWeek:Array.from(selectedDays), departureTime:time
+      });
+      invalidateRouteCache();
+      toast('Route posted — matching pool updated.');
+      go('#/routes');
+    }catch(ex){
+      errBox.innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`;
+      btn.disabled=false; btn.innerHTML = `${icon('plus','icon-sm')} Post route`; initIcons();
+    }
+  });
+}
+async function openDriverProfileModal(u, onDone){
+  let existing = {};
+  try{ existing = await api.getDriverProfile(u.id); }catch(e){ /* none yet */ }
+  openModal(`
+    <div class="modal-head"><h3>Vehicle details</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="field"><label>Car model</label><input type="text" id="dCar" value="${escapeHtml(existing.carModel||'')}" placeholder="e.g. Toyota Corolla 2021"></div>
+    <div class="field"><label>Plate number</label><input type="text" id="dPlate" value="${escapeHtml(existing.plateNumber||'')}" placeholder="e.g. LEA-2024"></div>
+    <div class="field"><label>Seats available</label><input type="number" min="1" max="8" id="dSeats" value="${existing.seatsAvailable||3}"></div>
+    <div id="dErr"></div>
+    <button class="btn btn-primary btn-block" id="saveDriverProfile">Save vehicle</button>
+  `);
+  document.getElementById('saveDriverProfile').addEventListener('click', async ()=>{
+    const errBox = document.getElementById('dErr');
+    try{
+      await api.upsertDriverProfile({carModel:document.getElementById('dCar').value.trim(), plateNumber:document.getElementById('dPlate').value.trim(), seatsAvailable:Number(document.getElementById('dSeats').value)});
+      S.hasDriverProfile = true;
+      toast('Driver profile saved.');
+      closeModal();
+      if(onDone) onDone();
+    }catch(ex){ errBox.innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`; }
+  });
+}
+
+/* ---------- MATCHES ---------- */
+async function viewMatches(root,u,routeId){
+  const myRoutesRaw = (await api.listMyRoutes()).filter(r=>r.status!=='archived');
+  const myRoutes = await enrichRouteList(myRoutesRaw);
+  if(!routeId) routeId = myRoutes[0]?.id;
+  if(!myRoutes.length){ root.innerHTML = emptyState('sparkles','Post a route first','Matches are ranked candidates for a route you own.', `<button class="btn btn-primary btn-sm" data-go="#/routes/new">Post a route</button>`); initIcons(); bindGoButtons(root); return; }
+  const activeRoute = myRoutes.find(r=>r.id===routeId) || myRoutes[0];
+
+  root.innerHTML = `
+    <div class="field" style="max-width:420px;">
+      <label>Ranking matches for</label>
+      <select id="routeSelect">${myRoutes.map(r=>`<option value="${r.id}" ${r.id===activeRoute.id?'selected':''}>${r.role==='driver'?'Driving':'Riding'} · ${escapeHtml(r.origin.label)} → ${escapeHtml(r.destination.label)} · ${r.departureTime}</option>`).join('')}</select>
+    </div>
+    <div class="demo-note">${icon('info','icon-sm')}<span>Exact pickup/drop-off addresses stay private until you're matched — only name, rating, and timing are shown here.</span></div>
+    <div id="matchList" style="margin-top:16px;"><div class="loading-page"><div class="spinner spinner-dark"></div> Ranking candidates…</div></div>
+  `;
+  initIcons();
+  document.getElementById('routeSelect').addEventListener('change', (e)=> { history.replaceState(null,'','#/matches/'+e.target.value); viewMatches(root,u,e.target.value); });
+
+  const listEl = document.getElementById('matchList');
+  let matches;
+  try{ matches = await api.getMatchesForRoute(activeRoute.id, {limit:50}); }
+  catch(ex){ listEl.innerHTML = emptyState('alert-triangle','Could not load matches', ex.message); initIcons(); return; }
+  if(!listEl) return;
+  if(!matches.length){ listEl.innerHTML = emptyState('sparkles','No candidates yet','Check back soon — we rank overlap by route and timing.'); initIcons(); return; }
+  listEl.innerHTML = `<div class="list">${matches.map(m=>matchRow(m,u,activeRoute)).join('')}</div>`;
+  initIcons();
+  listEl.querySelectorAll('[data-request]').forEach(el=> el.addEventListener('click', async ()=>{
+    el.disabled=true; el.innerHTML=`<div class="spinner"></div>`;
+    try{ await api.sendRequest(el.dataset.request, ''); toast('Request sent to the driver.'); viewMatches(root,u,activeRoute.id); }
+    catch(ex){ toast(ex.message,true); el.disabled=false; el.innerHTML='Send request'; }
+  }));
+}
+function matchRow(m,u,activeRoute){
+  const c = m.counterpartRoute;
+  if(!c) return '';
+  const pct = Math.round(m.overlapScore*100);
+  const canRequest = activeRoute.role==='rider' && m.status==='suggested';
+  return `
+  <div class="row">
+    ${avatarHtml({name:c.name}, 40)}
+    <div class="row-main">
+      <div class="title">${escapeHtml(c.name)} <span style="color:var(--ink-faint); font-weight:400; font-size:12.5px;">${icon('star','icon-sm')} ${c.rating||'new'}</span> ${statusBadge(m.status)}</div>
+      <div class="sub"><span class="mono">${c.departureTime}</span><span>${c.role==='driver'?'Driving':'Riding'}</span><span class="mono">${daysPretty(c.daysOfWeek)}</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:8px; max-width:220px;">
+        <div class="progress-track" style="flex:1;"><div class="progress-fill" style="width:${pct}%; background:${pct>75?'var(--teal)':pct>50?'var(--amber)':'var(--coral)'};"></div></div>
+        <span class="mono" style="font-size:12px; color:var(--ink-faint);">${pct}%</span>
+      </div>
+    </div>
+    <div class="row-actions">
+      ${canRequest ? `<button class="btn btn-primary btn-sm" data-request="${m.matchId}">Send request</button>` : `<span style="font-size:12px; color:var(--ink-faint);">${m.status==='requested'?'Awaiting driver':m.status==='approved'?'Matched':m.status==='declined'?'Declined':'Preview only'}</span>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- REQUESTS (driver, incoming) ---------- */
+let reqTab = '';
+async function viewRequests(root,u){
+  const list = await api.listIncomingRequests(reqTab?{status:reqTab}:{});
+  root.innerHTML = `
+    <div class="tabs">
+      ${['', 'requested','approved','declined'].map(s=>`<div class="tab ${reqTab===s?'active':''}" data-rtab="${s}">${s?s[0].toUpperCase()+s.slice(1):'All'}</div>`).join('')}
+    </div>
+    ${list.length ? `<div class="list">${list.map(r=>requestRow(r)).join('')}</div>` : emptyState('inbox','No requests here','When riders request a seat on your routes, they will show up here.')}
+  `;
+  initIcons();
+  root.querySelectorAll('[data-rtab]').forEach(el=> el.addEventListener('click', ()=>{ reqTab=el.dataset.rtab; viewRequests(root,u); }));
+  root.querySelectorAll('[data-approve]').forEach(el=> el.addEventListener('click', async (e)=>{
+    e.target.closest('button').disabled=true;
+    try{ await api.approveRequest(el.dataset.approve); invalidateRouteCache(); toast('Request approved — trip scheduled.'); viewRequests(root,u); }
+    catch(ex){ toast(ex.message,true); viewRequests(root,u); }
+  }));
+  root.querySelectorAll('[data-decline]').forEach(el=> el.addEventListener('click', ()=> openDeclineModal(el.dataset.decline, ()=>viewRequests(root,u))));
+}
+function openDeclineModal(matchId,onDone){
+  openModal(`
+    <div class="modal-head"><h3>Decline request</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="field"><label>Reason (optional, shared internally only)</label><textarea id="declineReason" placeholder="e.g. Route timing changed"></textarea></div>
+    <button class="btn btn-danger btn-block" id="confirmDecline">Decline request</button>
+  `);
+  document.getElementById('confirmDecline').addEventListener('click', async ()=>{
+    try{ await api.declineRequest(matchId, document.getElementById('declineReason').value.trim()); toast('Request declined.'); closeModal(); onDone(); }
+    catch(ex){ toast(ex.message,true); }
+  });
+}
+function requestRow(r){
+  return `
+  <div class="row">
+    ${avatarHtml({name:r.rider.name},40)}
+    <div class="row-main">
+      <div class="title">${escapeHtml(r.rider.name)} <span style="color:var(--ink-faint); font-weight:400; font-size:12.5px;">${icon('star','icon-sm')} ${r.rider.rating||'new'}</span> ${statusBadge(r.status)}</div>
+      <div class="sub"><span>${Math.round(r.overlapScore*100)}% route overlap</span><span>Requested ${timeAgo(r.requestedAt)}</span></div>
+    </div>
+    ${r.status==='requested' ? `
+    <div class="row-actions">
+      <button class="btn btn-teal btn-sm" data-approve="${r.matchId}">${icon('check','icon-sm')} Approve</button>
+      <button class="btn btn-ghost btn-sm" data-decline="${r.matchId}">Decline</button>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ---------- TRIPS ---------- */
+let tripsTab = '';
+async function viewTrips(root,u){
+  const raw = await api.listMyTrips(tripsTab?{status:tripsTab}:{});
+  root.innerHTML = `
+    <div class="tabs">
+      ${['', 'upcoming','completed','cancelled'].map(s=>`<div class="tab ${tripsTab===s?'active':''}" data-ttab="${s}">${s?s[0].toUpperCase()+s.slice(1):'All'}</div>`).join('')}
+    </div>
+    <div id="tripList">${raw.length ? '' : emptyState('navigation','No trips yet','Once a request is approved, the trip will appear here.')}</div>
+  `;
+  initIcons();
+  if(raw.length){
+    const list = document.getElementById('tripList');
+    list.innerHTML = `<div class="loading-page"><div class="spinner spinner-dark"></div> Loading trip details…</div>`;
+    const enriched = await Promise.all(raw.map(t=>enrichTrip(t).catch(()=>t)));
+    list.innerHTML = `<div class="list">${enriched.map(t=>tripRow(t,u)).join('')}</div>`;
+    list.querySelectorAll('[data-trip]').forEach(el=> el.addEventListener('click', ()=> go('#/trips/'+el.dataset.trip)));
+    initIcons();
+  }
+  root.querySelectorAll('[data-ttab]').forEach(el=> el.addEventListener('click', ()=>{ tripsTab=el.dataset.ttab; viewTrips(root,u); }));
+}
+function tripRow(t,u){
+  const iAmDriver = t.iAmDriver ?? (u.id===t.driver?.userId);
+  const otherName = iAmDriver ? (t.rider?.name||'Rider') : (t.driver?.name||'Driver');
+  const roleLabel = iAmDriver ? 'You drive' : 'You ride';
+  const lineColor = t.status==='upcoming' ? 'var(--teal)' : t.status==='completed' ? 'var(--border)' : 'var(--coral)';
+  return `
+  <div class="row" data-trip="${t.id}" style="cursor:pointer;">
+    <span class="row-line" style="background:${lineColor};"></span>
+    <span class="row-time">${fmtDate(t.date).split(' ')[0]}<br><span style="font-size:11px; color:var(--ink-faint);">${t.driverRoute?.departureTime||''}</span></span>
+    <div class="row-main">
+      <div class="title">${escapeHtml(t.driverRoute?.origin||'Trip')} ${t.driverRoute?.destination?`<span style="color:var(--ink-faint);">${icon('arrow-right','icon-sm')}</span> ${escapeHtml(t.driverRoute.destination)}`:''} ${statusBadge(t.status)}</div>
+      <div class="sub"><span>${roleLabel} · with ${escapeHtml(otherName)}</span>${t.costPerRider!=null?`<span class="mono">Rs. ${t.costPerRider}/rider</span>`:''}</div>
+    </div>
+    ${icon('chevron-right','icon-sm')}
+  </div>`;
+}
+
+async function viewTripDetail(root,u,tripId){
+  root.innerHTML = `<div class="loading-page"><div class="spinner spinner-dark"></div> Loading trip…</div>`;
+  let t;
+  try{ t = await api.getTrip(tripId); t = await enrichTrip(t); }
+  catch(ex){ root.innerHTML = emptyState('alert-triangle','Trip not found', ex.message); initIcons(); return; }
+  const isMyDriverTrip = t.iAmDriver;
+  const otherUser = isMyDriverTrip ? t.rider : t.driver;
+  const canActOnOther = !!otherUser?.userId;
+  const today = new Date().toISOString().slice(0,10);
+
+  root.innerHTML = `
+    <button class="btn btn-quiet" data-go="#/trips" style="padding-left:0; margin-bottom:10px;">${icon('arrow-left','icon-sm')} All trips</button>
+    <div class="card" style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12.5px; color:var(--ink-faint); margin-bottom:4px;">${fmtDate(t.date)} ${statusBadge(t.status)}</div>
+          <h2 style="font-size:19px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${escapeHtml(t.driverRoute.origin)} ${t.driverRoute.destination?`<span style="color:var(--amber);">${icon('arrow-right','icon-sm')}</span> ${escapeHtml(t.driverRoute.destination)}`:''}</h2>
+          <div class="demo-note" style="margin-top:8px;">${icon('info','icon-sm')}<span>Showing your own route — ${isMyDriverTrip?'riders':'drivers'} only see each other's timing and rating, not exact addresses, until you coordinate directly.</span></div>
+        </div>
+        <div class="mono" style="font-size:26px;">${t.driverRoute.departureTime}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        ${avatarHtml({name:otherUser.name},44)}
+        <div><b style="font-size:14px;">${escapeHtml(otherUser.name)}</b><div style="font-size:12.5px; color:var(--ink-faint);">${icon('star','icon-sm')} ${otherUser.rating||'new'} · ${isMyDriverTrip?'Rider':'Driver'}</div></div>
+        <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;">
+          ${isMyDriverTrip && t.status==='upcoming' && t.date===today ? `<button class="btn btn-teal btn-sm" id="pingBtn">${icon('navigation','icon-sm')} I'm on my way</button>` : ''}
+          ${t.status==='upcoming' ? `<button class="btn btn-ghost btn-sm" id="shareBtn">${icon('share-2','icon-sm')} Share status</button>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;" class="trip-grid">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px;"><h2>Cost split</h2>${isMyDriverTrip ? `<a class="link-text" id="recalcLink">Recalculate</a>`:''}</div>
+        <div id="costSplitBox"><div class="loading-page" style="padding:20px 0;"><div class="spinner spinner-dark"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px;"><h2>Trip actions</h2></div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${t.status==='upcoming' && isMyDriverTrip ? `<button class="btn btn-ghost btn-block" id="completeBtn">${icon('check','icon-sm')} Mark completed</button>` : ''}
+          ${t.status==='upcoming' ? `<button class="btn btn-danger btn-block" id="cancelBtn">${icon('x','icon-sm')} Cancel trip</button>` : ''}
+          ${t.status==='completed' && canActOnOther ? `<button class="btn btn-primary btn-block" id="rateBtn">${icon('star','icon-sm')} Rate ${escapeHtml(otherUser.name.split(' ')[0])}</button>` : ''}
+          ${canActOnOther ? `<button class="btn btn-ghost btn-block" id="reportBtn">${icon('alert-triangle','icon-sm')} Report an issue</button>` : ''}
+          ${t.status==='cancelled' && t.cancelReason ? `<div class="demo-note">${icon('info','icon-sm')}<span>Cancelled: ${escapeHtml(t.cancelReason)}</span></div>`:''}
+        </div>
+      </div>
+    </div>
+    <style>@media (max-width:820px){ .trip-grid{grid-template-columns:1fr !important;} }</style>
+  `;
+  initIcons(); bindGoButtons(root);
+
+  api.getCostSplit(t.id).then(cs=>{
+    document.getElementById('costSplitBox').innerHTML = `
+      <div class="kv"><span>Distance</span><b>${cs.totalDistanceKm} km</b></div>
+      <div class="kv"><span>Estimated fuel cost</span><b>Rs. ${cs.estimatedFuelCost.toFixed(1)}</b></div>
+      <div class="kv"><span>Riders sharing this route</span><b>${cs.riderCount}</b></div>
+      <div class="kv"><span>Your share</span><b style="color:var(--teal); font-size:16px;">Rs. ${cs.costPerRider}</b></div>
+      <div class="demo-note">${icon('info','icon-sm')}<span>Calculated only — CarpoolCampus doesn't process payments in-app.</span></div>
+    `;
+    initIcons();
+  }).catch(ex=>{ document.getElementById('costSplitBox').innerHTML = `<p style="font-size:13px; color:var(--coral);">${escapeHtml(ex.message)}</p>`; });
+
+  document.getElementById('pingBtn')?.addEventListener('click', async (e)=>{
+    e.target.disabled=true; e.target.innerHTML=`<div class="spinner"></div>`;
+    try{ await api.statusPing(t.id, {status:'on_the_way', etaMinutes: 5+Math.floor(Math.random()*10)}); toast("Riders notified you're on the way."); }
+    catch(ex){ toast(ex.message,true); }
+    viewTripDetail(root,u,tripId);
+  });
+  document.getElementById('completeBtn')?.addEventListener('click', async ()=>{
+    try{ await api.completeTrip(t.id); toast('Trip marked completed.'); }catch(ex){ toast(ex.message,true); }
+    viewTripDetail(root,u,tripId);
+  });
+  document.getElementById('cancelBtn')?.addEventListener('click', ()=> openCancelModal(t.id, ()=>viewTripDetail(root,u,tripId)));
+  document.getElementById('recalcLink')?.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    const el = document.getElementById('recalcLink'); el.textContent='Recalculating…';
+    try{ const res = await api.recalculateCostSplit(t.id); toast(`Recalculated — Rs. ${res.costPerRider} per rider.`); }
+    catch(ex){ toast(ex.message,true); }
+    viewTripDetail(root,u,tripId);
+  });
+  document.getElementById('rateBtn')?.addEventListener('click', ()=> openRateModal(t, otherUser, ()=>viewTripDetail(root,u,tripId)));
+  document.getElementById('reportBtn')?.addEventListener('click', ()=> openReportModal(otherUser, t.id));
+  document.getElementById('shareBtn')?.addEventListener('click', ()=> openShareModal(u, t.id));
+}
+function openCancelModal(tripId, onDone){
+  openModal(`
+    <div class="modal-head"><h3>Cancel trip</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="field"><label>Reason (optional)</label><textarea id="cancelReason" placeholder="e.g. Car in the shop today"></textarea></div>
+    <button class="btn btn-danger btn-block" id="confirmCancel">Cancel this trip</button>
+  `);
+  document.getElementById('confirmCancel').addEventListener('click', async ()=>{
+    try{ await api.cancelTrip(tripId, document.getElementById('cancelReason').value.trim()); toast('Trip cancelled.'); closeModal(); onDone(); }
+    catch(ex){ toast(ex.message,true); }
+  });
+}
+function openRateModal(trip, otherUser, onDone){
+  let score = 5;
+  const overlay = openModal(`
+    <div class="modal-head"><h3>Rate ${escapeHtml(otherUser.name)}</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="star-input" id="starInput" style="justify-content:center; margin-bottom:18px;">
+      ${[1,2,3,4,5].map(n=>`<button data-star="${n}">${starSvg(n<=5)}</button>`).join('')}
+    </div>
+    <div class="field"><label>Comment (optional)</label><textarea id="rateComment" placeholder="How was the ride?"></textarea></div>
+    <div id="rateErr"></div>
+    <button class="btn btn-primary btn-block" id="submitRating">Submit rating</button>
+  `);
+  function paintStars(){ overlay.querySelectorAll('[data-star]').forEach(b=> b.classList.toggle('on', Number(b.dataset.star)<=score)); }
+  paintStars();
+  overlay.querySelectorAll('[data-star]').forEach(b=> b.addEventListener('click', ()=>{ score=Number(b.dataset.star); paintStars(); }));
+  document.getElementById('submitRating').addEventListener('click', async ()=>{
+    try{
+      await api.submitRating({tripId:trip.id, toUserId:otherUser.userId, score, comment:document.getElementById('rateComment').value.trim()});
+      toast('Rating submitted — thanks!'); closeModal(); onDone();
+    }catch(ex){ document.getElementById('rateErr').innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`; }
+  });
+}
+function starSvg(filled){ return `<svg width="26" height="26" viewBox="0 0 24 24" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`; }
+function openReportModal(otherUser, tripId){
+  openModal(`
+    <div class="modal-head"><h3>Report an issue</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <p style="font-size:13px; color:var(--ink-faint); margin-bottom:14px;">This sends a report to campus admins for review — reserved for safety or no-show issues, not general feedback.</p>
+    <div class="field"><label>What happened</label><textarea id="reportReason" placeholder="e.g. Driver did not show up"></textarea></div>
+    <div id="reportErr"></div>
+    <button class="btn btn-danger btn-block" id="submitReport">Submit report</button>
+  `);
+  document.getElementById('submitReport').addEventListener('click', async ()=>{
+    const reason = document.getElementById('reportReason').value.trim();
+    if(!reason){ document.getElementById('reportErr').innerHTML = `<div class="err-msg">Please describe what happened.</div>`; return; }
+    try{ await api.submitSafetyReport({reportedUserId:otherUser.userId, reason, tripId}); toast('Report submitted to admins.'); closeModal(); }
+    catch(ex){ document.getElementById('reportErr').innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`; }
+  });
+}
+async function openShareModal(u, tripId){
+  const contacts = await api.listEmergencyContacts();
+  if(!contacts.length){
+    openModal(`
+      <div class="modal-head"><h3>Share live status</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+      ${emptyState('phone','No emergency contact yet','Add one from your profile to share trip status.', `<button class="btn btn-primary btn-sm" data-close data-go="#/profile">Go to profile</button>`)}
+    `);
+    document.querySelector('[data-go]')?.addEventListener('click',()=>go('#/profile'));
+    return;
+  }
+  openModal(`
+    <div class="modal-head"><h3>Share live status</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="field"><label>Send to</label><select id="contactSelect">${contacts.map(c=>`<option value="${c.id}">${escapeHtml(c.name)} · ${escapeHtml(c.phone)}</option>`).join('')}</select></div>
+    <button class="btn btn-primary btn-block" id="genShare">Generate share link</button>
+    <div id="shareResult" style="margin-top:14px;"></div>
+  `);
+  document.getElementById('genShare').addEventListener('click', async ()=>{
+    try{
+      const res = await api.shareTripStatus(tripId, document.getElementById('contactSelect').value);
+      document.getElementById('shareResult').innerHTML = `
+        <div class="field"><label>Share link (expires ${new Date(res.expiresAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})})</label>
+        <input type="text" readonly value="${res.shareUrl}" id="shareLinkInput"></div>
+        <button class="btn btn-ghost btn-block" id="copyLink">${icon('copy','icon-sm')} Copy link</button>
+        <div class="demo-note">${icon('info','icon-sm')}<span>Live tracking for this link isn't wired up on the backend yet — it's generated and time-limited, but nothing resolves it yet (documented gap, not a bug).</span></div>
+      `;
+      initIcons();
+      document.getElementById('copyLink').addEventListener('click', ()=>{ document.getElementById('shareLinkInput').select(); document.execCommand('copy'); toast('Link copied.'); });
+    }catch(ex){ document.getElementById('shareResult').innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`; }
+  });
+}
+
+/* ---------- NOTIFICATIONS ---------- */
+async function viewNotifications(root,u){
+  const list = await api.listNotifications({limit:50});
+  root.innerHTML = `
+    <div class="section-title"><h2>${list.filter(n=>!n.read).length} unread</h2>${list.length?`<a class="link-text" id="markAllRead">Mark all as read</a>`:''}</div>
+    ${list.length ? `<div class="list">${list.map(n=>notifRow(n)).join('')}</div>` : emptyState('bell','No notifications yet',"You'll see ride requests, approvals, and trip pings here.")}
+  `;
+  initIcons();
+  document.getElementById('markAllRead')?.addEventListener('click', async ()=>{ await api.markAllRead(); viewNotifications(root,u); });
+  root.querySelectorAll('.notif-item').forEach(el=> el.addEventListener('click', async ()=>{ await handleNotifClick(el); render(); }));
+}
+
+/* ---------- PROFILE ---------- */
+async function viewProfile(root,u){
+  const [driverProfile, contacts, ratings] = await Promise.all([
+    S.hasDriverProfile ? api.getDriverProfile(u.id).catch(()=>null) : null,
+    api.listEmergencyContacts(),
+    api.ratingsForUser(u.id),
+  ]);
+  root.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:20px;" class="profile-grid">
+      <div>
+        <div class="card" style="text-align:center;">
+          <div style="position:relative; display:inline-block;">
+            ${avatarHtml(u,84)}
+            <label for="avatarInput" class="icon-btn" style="position:absolute; bottom:0; right:0; background:var(--amber); border-color:var(--amber); color:#fff; cursor:pointer;">${icon('upload','icon-sm')}</label>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+          </div>
+          <h3 style="margin-top:14px; font-size:17px;">${escapeHtml(u.name)}</h3>
+          <div style="color:var(--ink-faint); font-size:13px;">${escapeHtml(u.email)}</div>
+          <div style="margin-top:8px; display:flex; justify-content:center; gap:6px;">${statusBadge(u.verified?'active':'open')}<span class="badge b-grey">${icon('star','icon-sm')} ${u.rating||'new'} (${u.ratingCount||0})</span></div>
+          <div class="divider"></div>
+          <div class="field" style="text-align:left;"><label>Full name</label><input type="text" id="editName" value="${escapeHtml(u.name)}"></div>
+          <button class="btn btn-primary btn-block btn-sm" id="saveProfile">Save changes</button>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="section-title" style="margin-bottom:10px;"><h2>${icon('car','icon-sm')} Vehicle</h2></div>
+          ${driverProfile ? `
+            <div class="kv"><span>Car model</span><b>${escapeHtml(driverProfile.carModel)}</b></div>
+            <div class="kv"><span>Plate number</span><b class="mono">${escapeHtml(driverProfile.plateNumber)}</b></div>
+            <div class="kv"><span>Seats available</span><b>${driverProfile.seatsAvailable}</b></div>
+            <button class="btn btn-ghost btn-block btn-sm" id="editVehicle" style="margin-top:12px;">Edit vehicle</button>
+          ` : emptyState('car','No vehicle on file','Add your car to post driver routes.', `<button class="btn btn-primary btn-sm" id="editVehicle">${icon('plus','icon-sm')} Add vehicle</button>`)}
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px;"><h2>${icon('phone','icon-sm')} Emergency contacts</h2><a class="link-text" id="addContact">+ Add contact</a></div>
+          ${contacts.length ? contacts.map(c=>`
+            <div class="kv"><span>${escapeHtml(c.name)} <span class="mono" style="color:var(--ink-faint);">${escapeHtml(c.phone)}</span></span><button class="icon-btn" data-del-contact="${c.id}" style="width:28px;height:28px;">${icon('trash-2','icon-sm')}</button></div>
+          `).join('') : `<p style="font-size:13px; color:var(--ink-faint);">Add someone we can share your live trip status with.</p>`}
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="section-title" style="margin-bottom:10px;"><h2>${icon('star','icon-sm')} Ratings received</h2></div>
+          ${ratings.length ? ratings.slice(0,5).map(r=>`
+            <div style="padding:11px 0; border-bottom:1px solid var(--border-soft);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="font-size:13.5px;">${escapeHtml(r.fromUser.name)}</b>
+                <div class="star-row">${[1,2,3,4,5].map(n=>`<svg width="13" height="13" viewBox="0 0 24 24" class="${n<=r.score?'on':''}" fill="${n<=r.score?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`).join('')}</div>
+              </div>
+              ${r.comment?`<p style="font-size:12.5px; color:var(--ink-faint); margin:4px 0 0;">"${escapeHtml(r.comment)}"</p>`:''}
+            </div>`).join('') : `<p style="font-size:13px; color:var(--ink-faint);">No ratings yet — they'll show up after your first completed trip.</p>`}
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="section-title" style="margin-bottom:6px;"><h2>${icon('settings','icon-sm')} Backend</h2></div>
+          <div class="field"><label>API base URL</label><input type="text" id="apiBaseInput" value="${escapeHtml(getApiBaseUrl())}"></div>
+          <button class="btn btn-ghost btn-block btn-sm" id="saveApiBase">Save & reconnect</button>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="section-title" style="margin-bottom:6px;"><h2>${icon('log-out','icon-sm')} Account</h2></div>
+          <p style="font-size:12.5px; color:var(--ink-faint); margin-bottom:12px;">Deleting your account is permanent, and blocked while you have any active route.</p>
+          <button class="btn btn-danger btn-sm" id="deleteAccountBtn">Delete account</button>
+        </div>
+      </div>
+    </div>
+    <style>@media (max-width:880px){ .profile-grid{grid-template-columns:1fr !important;} }</style>
+  `;
+  initIcons();
+  document.getElementById('saveProfile').addEventListener('click', async ()=>{
+    try{ const res = await api.updateMe({name:document.getElementById('editName').value.trim()}); S.user.name = res.name; toast('Profile updated.'); render(); }
+    catch(ex){ toast(ex.message,true); }
+  });
+  document.getElementById('avatarInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    toast('Uploading photo…');
+    try{ const res = await api.setAvatar(file); S.user.profilePictureUrl = res.profilePictureUrl; toast('Profile picture updated.'); render(); }
+    catch(ex){ toast(ex.message,true); }
+  });
+  document.getElementById('editVehicle')?.addEventListener('click', ()=> openDriverProfileModal(u, ()=>render()));
+  document.getElementById('addContact').addEventListener('click', ()=> openContactModal(u, ()=>render()));
+  root.querySelectorAll('[data-del-contact]').forEach(el=> el.addEventListener('click', async ()=>{
+    try{ await api.deleteEmergencyContact(el.dataset.delContact); toast('Contact removed.'); render(); }
+    catch(ex){ toast(ex.message,true); }
+  }));
+  document.getElementById('saveApiBase').addEventListener('click', ()=>{
+    setApiBaseUrl(document.getElementById('apiBaseInput').value.trim());
+    toast('Backend URL saved. Reconnecting…');
+    clearTokens(); S.user=null; S.userId=null;
+    go('#/login');
+  });
+  document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>{
+    if(!confirm('Delete your account? This cannot be undone.')) return;
+    try{ await api.deleteMe(); clearTokens(); S.user=null; S.userId=null; toast('Account deleted.'); go('#/login'); }
+    catch(ex){ toast(ex.message,true); }
+  });
+}
+function openContactModal(u,onDone){
+  openModal(`
+    <div class="modal-head"><h3>Add emergency contact</h3><button class="icon-btn" data-close>${icon('x','icon-sm')}</button></div>
+    <div class="field"><label>Name</label><input type="text" id="cName" placeholder="e.g. Ayesha Ahmed"></div>
+    <div class="field"><label>Phone</label><input type="tel" id="cPhone" placeholder="+92-300-1234567"></div>
+    <div id="cErr"></div>
+    <button class="btn btn-primary btn-block" id="saveContact">Save contact</button>
+  `);
+  document.getElementById('saveContact').addEventListener('click', async ()=>{
+    try{ await api.addEmergencyContact({name:document.getElementById('cName').value.trim(), phone:document.getElementById('cPhone').value.trim()}); toast('Contact added.'); closeModal(); onDone(); }
+    catch(ex){ document.getElementById('cErr').innerHTML = `<div class="err-msg">${escapeHtml(ex.message)}</div>`; }
+  });
+}
+
+/* ---------- ADMIN ---------- */
+async function viewAdmin(root,u,tab){
+  root.innerHTML = `
+    <div class="tabs">
+      <div class="tab ${tab==='users'?'active':''}" data-atab="users">Users</div>
+      <div class="tab ${tab==='reports'?'active':''}" data-atab="reports">Reports</div>
+      <div class="tab ${tab==='analytics'?'active':''}" data-atab="analytics">Analytics</div>
+    </div>
+    <div id="adminBody"><div class="loading-page"><div class="spinner spinner-dark"></div></div></div>
+  `;
+  initIcons();
+  root.querySelectorAll('[data-atab]').forEach(el=> el.addEventListener('click', ()=> { history.replaceState(null,'','#/admin/'+el.dataset.atab); viewAdmin(root,u,el.dataset.atab); }));
+  const body = document.getElementById('adminBody');
+  if(tab==='users') return renderAdminUsers(body,u);
+  if(tab==='reports') return renderAdminReports(body,u);
+  return renderAdminAnalytics(body,u);
+}
+let adminUserFilters = {};
+async function renderAdminUsers(body,u){
+  const users = await api.adminListUsers(adminUserFilters);
+  body.innerHTML = `
+    <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+      <input type="text" id="uq" placeholder="Search name or email…" style="max-width:240px;" value="${adminUserFilters.q||''}">
+      <select id="uRole" style="max-width:150px;"><option value="">All roles</option><option value="driver">Driver</option><option value="rider">Rider</option></select>
+      <select id="uVerified" style="max-width:170px;"><option value="">Any verification</option><option value="true">Verified</option><option value="false">Unverified</option></select>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+      <tbody>${users.map(us=>`
+        <tr>
+          <td style="display:flex; align-items:center; gap:8px;">${avatarHtml({name:us.name},26)} ${escapeHtml(us.name)}</td>
+          <td>${escapeHtml(us.email)}</td>
+          <td>${us.role}${us.verified?'':' '+`<span class="badge b-coral">unverified</span>`}</td>
+          <td style="text-align:right; white-space:nowrap;">
+            ${!us.verified?`<button class="btn btn-ghost btn-sm" data-verify="${us.id}">Verify</button>`:''}
+            <button class="btn btn-danger btn-sm" data-suspend="${us.id}" data-status="suspended">Suspend</button>
+            <button class="btn btn-teal btn-sm" data-suspend="${us.id}" data-status="active">Reinstate</button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="4" style="text-align:center; color:var(--ink-faint); padding:30px;">No users match these filters.</td></tr>`}</tbody>
+    </table></div>
+    <div class="demo-note" style="margin-top:12px;">${icon('info','icon-sm')}<span>The user list endpoint doesn't return current suspension status, so both actions are always shown — pick whichever applies.</span></div>
+  `;
+  initIcons();
+  document.getElementById('uq').addEventListener('input', debounce((e)=>{ adminUserFilters.q=e.target.value; renderAdminUsers(body,u); },350));
+  document.getElementById('uRole').addEventListener('change', (e)=>{ adminUserFilters.role=e.target.value; renderAdminUsers(body,u); });
+  document.getElementById('uVerified').addEventListener('change', (e)=>{ adminUserFilters.verified=e.target.value; renderAdminUsers(body,u); });
+  body.querySelectorAll('[data-verify]').forEach(el=> el.addEventListener('click', async ()=>{ await api.adminVerifyUser(el.dataset.verify); toast('User verified.'); renderAdminUsers(body,u); }));
+  body.querySelectorAll('[data-suspend]').forEach(el=> el.addEventListener('click', async ()=>{ await api.adminSetUserStatus(el.dataset.suspend, el.dataset.status); toast(`User ${el.dataset.status}.`); renderAdminUsers(body,u); }));
+}
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+let adminReportFilter='';
+async function renderAdminReports(body,u){
+  const reports = await api.adminListReports(adminReportFilter?{status:adminReportFilter}:{});
+  // Report.toPublicJSON only returns reportedUserId/reportedByUserId (raw ids) —
+  // resolve display names via GET /users/:userId, cached.
+  await Promise.all(reports.flatMap(r=>[getUserCached(r.reportedUserId), getUserCached(r.reportedByUserId)]));
+  body.innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+      ${['', 'open','reviewing','resolved','dismissed'].map(s=>`<button class="btn ${adminReportFilter===s?'btn-primary':'btn-ghost'} btn-sm" data-rf="${s}">${s?s[0].toUpperCase()+s.slice(1):'All'}</button>`).join('')}
+    </div>
+    ${reports.length ? `<div class="list">${reports.map(r=>`
+      <div class="row">
+        <div class="row-main">
+          <div class="title">${escapeHtml(userCache[r.reportedUserId]?.name || 'Unknown user')} ${statusBadge(r.status)}</div>
+          <div class="sub"><span>Reported by ${escapeHtml(userCache[r.reportedByUserId]?.name || '—')}</span><span>${timeAgo(r.createdAt)}</span></div>
+          <div class="sub" style="margin-top:2px;">"${escapeHtml(r.reason)}"</div>
+        </div>
+        ${r.status==='open'||r.status==='reviewing' ? `<div class="row-actions"><button class="btn btn-teal btn-sm" data-resolve="${r.id}">Resolve</button><button class="btn btn-ghost btn-sm" data-dismiss="${r.id}">Dismiss</button></div>` : ''}
+      </div>
+    `).join('')}</div>` : emptyState('shield-check','No reports','Nothing flagged for review right now.')}
+  `;
+  initIcons();
+  body.querySelectorAll('[data-rf]').forEach(el=> el.addEventListener('click', ()=>{ adminReportFilter=el.dataset.rf; renderAdminReports(body,u); }));
+  body.querySelectorAll('[data-resolve]').forEach(el=> el.addEventListener('click', async ()=>{ await api.adminResolveReport(el.dataset.resolve,'resolved','Reviewed by admin.'); toast('Report resolved.'); renderAdminReports(body,u); }));
+  body.querySelectorAll('[data-dismiss]').forEach(el=> el.addEventListener('click', async ()=>{ await api.adminResolveReport(el.dataset.dismiss,'dismissed'); toast('Report dismissed.'); renderAdminReports(body,u); }));
+}
+async function renderAdminAnalytics(body,u){
+  const a = await api.adminAnalytics();
+  body.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--teal-soft); color:var(--teal);">${icon('route','icon-sm')}</div><b>${a.routesPosted}</b><span>Routes posted</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--amber-soft); color:var(--amber-ink);">${icon('users-round','icon-sm')}</div><b>${a.activeUsers}</b><span>Active users</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--teal-soft); color:var(--teal);">${icon('sparkles','icon-sm')}</div><b>${a.routesWithAtLeastOneMatchPct}%</b><span>Routes with a match</span></div>
+      <div class="stat-card"><div class="icon-wrap" style="background:var(--amber-soft); color:var(--amber-ink);">${icon('navigation','icon-sm')}</div><b>${a.confirmedRecurringTrips}</b><span>Confirmed recurring trips</span></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px;"><h2>Match rate</h2></div>
+      <div class="progress-track" style="height:10px;"><div class="progress-fill" style="width:${a.routesWithAtLeastOneMatchPct}%;"></div></div>
+      <p style="font-size:12.5px; color:var(--ink-faint); margin-top:10px;">${a.routesWithAtLeastOneMatchPct}% of all posted routes have matched with at least one counterpart route.</p>
+      <div class="demo-note">${icon('info','icon-sm')}<span>Figures mirror the platform's example metrics; this demo's live seed data trends similarly at smaller scale.</span></div>
+    </div>
+  `;
+  initIcons();
+}
+
+/* ======================================================================
+   BOOT
+   ====================================================================== */
+render();
+</script>
+</body>
+</html>
