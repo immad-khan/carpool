@@ -291,11 +291,12 @@ tr:last-child td{border-bottom:none;}
 <div id="app"></div>
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="config.js"></script>
 <script>
 /* ======================================================================
    BACKEND CONFIG — points this frontend at a real CarpoolCampus API
    ====================================================================== */
-function getApiBaseUrl(){ return localStorage.getItem('cc_api_base') || 'http://localhost:5000/api/v1'; }
+function getApiBaseUrl(){ return window.CARPOOL_API_BASE_URL || localStorage.getItem('cc_api_base') || 'http://localhost:5000/api/v1'; }
 function setApiBaseUrl(url){ localStorage.setItem('cc_api_base', url.replace(/\/+$/,'')); }
 
 /* ======================================================================
