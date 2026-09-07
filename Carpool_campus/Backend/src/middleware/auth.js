@@ -10,18 +10,20 @@ async function authenticate(req, res, next) {
     throw ApiError.unauthorized('Missing or malformed Authorization header');
   }
 
-  let payload;
-  try {
-    payload = verifyAccessToken(token);
-  } catch (err) {
-    throw ApiError.unauthorized('Access token is invalid or expired');
-  }
-
-  const user = await User.findById(payload.sub);
-  if (!user) throw ApiError.unauthorized('User no longer exists');
-  if (user.status === 'suspended') throw ApiError.forbidden('Account is suspended');
-
-  req.user = user;
+  // Stateless mock: skip JWT verification and DB lookup
+  req.user = {
+    _id: 'mock_user_id',
+    name: 'Test User',
+    email: 'mock@campus.edu',
+    roles: ['rider'],
+    status: 'active',
+    hasCapability: () => true,
+    isAdmin: () => false,
+    toPublicJSON: function() { 
+      return { id: this._id, name: this.name, email: this.email, roles: this.roles, verified: true };
+    }
+  };
+  
   next();
 }
 
