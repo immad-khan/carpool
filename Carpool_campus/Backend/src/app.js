@@ -22,15 +22,7 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .map((url) => url.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
-app.use(cors({
-  origin(origin, callback) {
-    // Requests without an Origin header include health checks and server-to-server calls.
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {
-      return callback(null, true);
-    }
-    return callback(new Error('Origin is not allowed by CORS'));
-  },
-}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(async (req, res, next) => {
   try {
     await servicesReady;
