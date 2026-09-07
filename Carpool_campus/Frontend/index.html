@@ -291,162 +291,154 @@ tr:last-child td{border-bottom:none;}
 <div id="app"></div>
 <div class="toast-wrap" id="toastWrap"></div>
 
-<script src="config.js"></script>
+<!-- config.js not needed — fully offline mock mode -->
 <script>
 /* ======================================================================
-   BACKEND CONFIG — points this frontend at a real CarpoolCampus API
+   FULLY OFFLINE MOCK — zero network requests, everything in-memory
    ====================================================================== */
-function getApiBaseUrl(){ return window.CARPOOL_API_BASE_URL || localStorage.getItem('cc_api_base') || 'https://carpool-two-beta.vercel.app/api/v1'; }
-function setApiBaseUrl(url){ localStorage.setItem('cc_api_base', url.replace(/\/+$/,'')); }
 
-/* ======================================================================
-   TOKEN STORAGE (real browser localStorage — this runs as a normal page)
-   ====================================================================== */
+// Token helpers (kept so rest of app code compiles unchanged)
 function getAccessToken(){ return localStorage.getItem('cc_access_token'); }
 function getRefreshToken(){ return localStorage.getItem('cc_refresh_token'); }
-function setTokens(access, refresh){ if(access) localStorage.setItem('cc_access_token', access); if(refresh) localStorage.setItem('cc_refresh_token', refresh); }
+function setTokens(a,r){ if(a) localStorage.setItem('cc_access_token',a); if(r) localStorage.setItem('cc_refresh_token',r); }
 function clearTokens(){ localStorage.removeItem('cc_access_token'); localStorage.removeItem('cc_refresh_token'); }
+function toQuery(){return '';}
 
-class ApiClientError extends Error{
-  constructor(code, message, status, details){ super(message||'Request failed'); this.code=code; this.status=status; this.details=details; }
-}
+// ---- MOCK DATA STORE ----
+const _uid = ()=>'id-'+Math.random().toString(36).slice(2,9);
+const _now = ()=>new Date().toISOString();
 
-/* ======================================================================
-   CORE FETCH WRAPPER — matches the API's {success,data,pagination}/{success:false,error} envelope
-   ====================================================================== */
-async function apiFetch(path, {method='GET', body, isForm=false, auth=true, retry=true} = {}){
-  const headers = {};
-  if(!isForm) headers['Content-Type'] = 'application/json';
-  if(auth){ const t = getAccessToken(); if(t) headers['Authorization'] = 'Bearer '+t; }
+let _me = null; // set on login/register
+const _routes = [
+  {id:'rt-001', userId:'me', role:'driver', origin:{label:'Model Town, Lahore'}, destination:{label:'GC University Lahore'}, departureTime:'08:00', daysOfWeek:['mon','tue','wed','thu','fri'], status:'active', availableSeats:3, vehicle:{make:'Toyota',model:'Corolla',color:'White',plateNumber:'LEA-1234'}, createdAt:_now()},
+  {id:'rt-002', userId:'me', role:'rider', origin:{label:'Gulberg III, Lahore'}, destination:{label:'GC University Lahore'}, departureTime:'08:30', daysOfWeek:['mon','wed','fri'], status:'active', createdAt:_now()},
+];
+const _matches = [
+  {matchId:'mx-001', driverRouteId:'rt-001', riderRouteId:'rt-ext-1', overlapPct:78, status:'suggested', counterpartRoute:{userId:'u2', name:'Hamza Iqbal', rating:4.6, departureTime:'08:05', profilePictureUrl:null}},
+  {matchId:'mx-002', driverRouteId:'rt-001', riderRouteId:'rt-ext-2', overlapPct:61, status:'requested', counterpartRoute:{userId:'u3', name:'Sana Malik', rating:4.9, departureTime:'07:55', profilePictureUrl:null}},
+];
+const _trips = [
+  {id:'tr-001', matchId:'mx-003', status:'upcoming', scheduledDate:new Date(Date.now()+86400000).toISOString().slice(0,10), driverRouteId:'rt-001', riderRouteId:'rt-ext-3', iAmDriver:true, driverRoute:{origin:'Model Town',destination:'GC University',departureTime:'08:00'}, driver:{name:'You',rating:4.8}, rider:{name:'Ali Raza',rating:4.5}, createdAt:_now()},
+  {id:'tr-002', matchId:'mx-004', status:'completed', scheduledDate:'2026-09-05', driverRouteId:'rt-ext-4', riderRouteId:'rt-002', iAmDriver:false, driverRoute:{origin:'Gulberg',destination:'GC University',departureTime:'08:30'}, driver:{name:'Danish Ahmed',rating:4.7}, rider:{name:'You',rating:4.8}, createdAt:_now()},
+];
+const _contacts = [
+  {id:'ec-001', name:'Ahmed Khan', phone:'+923001234567', relationship:'Father'},
+];
+const _notifs = [
+  {id:'nf-001', type:'ride_request', message:'Hamza Iqbal requested a seat on your morning route.', read:false, createdAt:new Date(Date.now()-3600000).toISOString()},
+  {id:'nf-002', type:'match_approved', message:'Your ride request for tomorrow has been approved!', read:false, createdAt:new Date(Date.now()-7200000).toISOString()},
+  {id:'nf-003', type:'trip_reminder', message:'Trip to GC University tomorrow at 08:00.', read:true, createdAt:new Date(Date.now()-86400000).toISOString()},
+];
+const _ratings = [
+  {id:'rat-001', fromUser:{name:'Danish Ahmed'}, rating:5, comment:'Very punctual and friendly!', createdAt:'2026-09-05T09:00:00Z'},
+  {id:'rat-002', fromUser:{name:'Sana Malik'}, rating:4, comment:'Good driver, comfortable ride.', createdAt:'2026-08-30T09:00:00Z'},
+];
+const _reports = [
+  {id:'rp-001', type:'unsafe_driving', description:'Driver was speeding.', status:'reviewing', createdAt:'2026-09-01T10:00:00Z'},
+];
 
-  let res;
-  try{
-    res = await fetch(getApiBaseUrl()+path, { method, headers, body: body===undefined ? undefined : (isForm ? body : JSON.stringify(body)) });
-  }catch(netErr){
-    throw new ApiClientError('NETWORK_ERROR', `Can't reach the backend at ${getApiBaseUrl()}. Is it running?`, 0);
-  }
+const _adminUsers = [
+  {id:'u-a1', name:'Immad Khan', email:'immad@gcu.edu.pk', roles:['rider','driver'], verified:true, status:'active', rating:4.8},
+  {id:'u-a2', name:'Hamza Iqbal', email:'hamza@gcu.edu.pk', roles:['rider'], verified:true, status:'active', rating:4.6},
+  {id:'u-a3', name:'Sana Malik', email:'sana@gcu.edu.pk', roles:['rider'], verified:false, status:'active', rating:4.9},
+  {id:'u-a4', name:'Danish Ahmed', email:'danish@gcu.edu.pk', roles:['driver'], verified:true, status:'active', rating:4.7},
+];
 
-  if(res.status===204) return null;
-
-  let json = null;
-  try{ json = await res.json(); }catch(e){ /* non-JSON response */ }
-
-  if(!res.ok || !json || json.success===false){
-    if(res.status===401 && auth && retry){
-      const refreshed = await tryRefreshToken();
-      if(refreshed) return apiFetch(path, {method, body, isForm, auth, retry:false});
-    }
-    const e = (json && json.error) || {};
-    throw new ApiClientError(e.code || 'ERROR', e.message || `Request failed (${res.status})`, res.status, e.details);
-  }
-  return json;
-}
-
-async function tryRefreshToken(){
-  const rt = getRefreshToken();
-  if(!rt) return false;
-  try{
-    const res = await fetch(getApiBaseUrl()+'/auth/refresh-token', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({refreshToken:rt}) });
-    const json = await res.json();
-    if(res.ok && json.success){ setTokens(json.data.accessToken, null); return true; }
-  }catch(e){ /* fall through */ }
-  clearTokens(); S.userId=null; S.user=null; S.hasDriverProfile=false;
-  if(location.hash !== '#/login') go('#/login');
-  return false;
-}
-
-function toQuery(obj={}){
-  const parts = Object.entries(obj).filter(([,v])=>v!==undefined && v!==null && v!=='').map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v));
-  return parts.length ? '?'+parts.join('&') : '';
-}
-
-/* ======================================================================
-   API — one function per documented endpoint, wired to the real backend
-   ====================================================================== */
+// ---- MOCK API ----
 const api = {
-  // --- Auth ---
-  async login(email,password){
-    const json = await apiFetch('/auth/login', {method:'POST', auth:false, body:{email,password}});
-    setTokens(json.data.accessToken, json.data.refreshToken);
-    return json.data;
+  // Auth
+  async login(email, password){
+    const name = (email||'User').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    _me = {id:'me', name, email: email||'user@gcu.edu.pk', roles:['rider','driver'], verified:true, rating:4.8, profilePictureUrl:null};
+    setTokens('mock-token','mock-refresh');
+    return {accessToken:'mock-token', refreshToken:'mock-refresh', user:_me};
   },
-  async register(data){ return (await apiFetch('/auth/register', {method:'POST', auth:false, body:data})).data; },
-  async verifyEmail(email,otp){ return (await apiFetch('/auth/verify-email', {method:'POST', auth:false, body:{email,otp}})).data; },
-  async resendOtp(email,purpose='email_verification'){ return await apiFetch('/auth/resend-otp', {method:'POST', auth:false, body:{email,purpose}}); },
-  async forgotPassword(email){ return await apiFetch('/auth/forgot-password', {method:'POST', auth:false, body:{email}}); },
-  async resetPassword(email,otp,newPassword){ return await apiFetch('/auth/reset-password', {method:'POST', auth:false, body:{email,otp,newPassword}}); },
-  async logout(){ const rt=getRefreshToken(); try{ await apiFetch('/auth/logout', {method:'POST', body:{refreshToken:rt}}); }catch(e){} clearTokens(); },
-
-  // --- Users ---
-  async getMe(){ return (await apiFetch('/users/me')).data; },
-  async updateMe(patch){ return (await apiFetch('/users/me', {method:'PATCH', body:patch})).data; },
-  async getUserById(userId){ return (await apiFetch('/users/'+userId)).data; },
-  async setAvatar(file){
-    const fd = new FormData(); fd.append('image', file);
-    return (await apiFetch('/users/me/profile-picture', {method:'PUT', isForm:true, body:fd})).data;
+  async register(data){
+    _me = {id:'me', name:data.name||'New User', email:data.email||'user@gcu.edu.pk', roles:[data.role||'rider'], verified:false, rating:0, profilePictureUrl:null};
+    return {id:'me', ...data, verified:false};
   },
-  async deleteMe(){ return await apiFetch('/users/me', {method:'DELETE'}); },
+  async verifyEmail(){ return {id:'me', verified:true}; },
+  async resendOtp(){ return null; },
+  async forgotPassword(){ return null; },
+  async resetPassword(){ return null; },
+  async logout(){ clearTokens(); _me=null; },
 
-  // --- Driver profile ---
-  async upsertDriverProfile(data){ return (await apiFetch('/drivers/me', {method:'PUT', body:data})).data; },
-  async getDriverProfile(userId){ return (await apiFetch('/drivers/'+userId)).data; },
+  // Users
+  async getMe(){
+    if(_me) return _me;
+    // Restore from localStorage name saved at login
+    const saved = localStorage.getItem('cc_mock_user');
+    if(saved){ _me=JSON.parse(saved); return _me; }
+    return {id:'me',name:'Demo User',email:'demo@gcu.edu.pk',roles:['rider','driver'],verified:true,rating:4.8,profilePictureUrl:null};
+  },
+  async updateMe(patch){ _me={..._me,...patch}; return _me; },
+  async getUserById(id){ return _adminUsers.find(u=>u.id===id)||{id,name:'Unknown User',rating:0}; },
+  async setAvatar(){ return _me; },
+  async deleteMe(){ clearTokens(); _me=null; },
 
-  // --- Emergency contacts ---
-  async listEmergencyContacts(){ return (await apiFetch('/emergency-contacts')).data; },
-  async addEmergencyContact(data){ return (await apiFetch('/emergency-contacts', {method:'POST', body:data})).data; },
-  async updateEmergencyContact(id,patch){ return (await apiFetch('/emergency-contacts/'+id, {method:'PATCH', body:patch})).data; },
-  async deleteEmergencyContact(id){ return await apiFetch('/emergency-contacts/'+id, {method:'DELETE'}); },
+  // Driver profile
+  async getDriverProfile(){ return {make:'Toyota',model:'Corolla',color:'White',plateNumber:'LEA-1234',availableSeats:3}; },
+  async upsertDriverProfile(data){ return data; },
 
-  // --- Routes ---
-  async createRoute(data){ return (await apiFetch('/routes', {method:'POST', body:data})).data; },
-  async listMyRoutes(filters={}){ return (await apiFetch('/routes/me'+toQuery(filters))).data; },
-  async getRoute(id){ return (await apiFetch('/routes/'+id)).data; },
-  async updateRoute(id,patch){ return (await apiFetch('/routes/'+id, {method:'PATCH', body:patch})).data; },
-  async setRouteStatus(id,status){ return (await apiFetch('/routes/'+id+'/status', {method:'PATCH', body:{status}})).data; },
-  async skipRouteDate(id,date){ return (await apiFetch('/routes/'+id+'/skip', {method:'POST', body:{date}})).data; },
-  async deleteRoute(id){ return await apiFetch('/routes/'+id, {method:'DELETE'}); },
+  // Emergency contacts
+  async listEmergencyContacts(){ return [..._contacts]; },
+  async addEmergencyContact(data){ const c={id:_uid(),...data}; _contacts.push(c); return c; },
+  async updateEmergencyContact(id,patch){ const i=_contacts.findIndex(c=>c.id===id); if(i>-1) _contacts[i]={..._contacts[i],...patch}; return _contacts[i]; },
+  async deleteEmergencyContact(id){ const i=_contacts.findIndex(c=>c.id===id); if(i>-1) _contacts.splice(i,1); return null; },
 
-  // --- Matching ---
-  async getMatchesForRoute(routeId, params={}){ return (await apiFetch('/routes/'+routeId+'/matches'+toQuery(params))).data; },
-  async getMatch(matchId){ return (await apiFetch('/matches/'+matchId)).data; },
+  // Routes
+  async listMyRoutes(){ return _routes.map(r=>({id:r.id,role:r.role,daysOfWeek:r.daysOfWeek,departureTime:r.departureTime,status:r.status,origin:r.origin,destination:r.destination})); },
+  async getRoute(id){ return _routes.find(r=>r.id===id)||_routes[0]; },
+  async createRoute(data){ const r={id:_uid(),userId:'me',...data,status:'active',createdAt:_now()}; _routes.push(r); return r; },
+  async updateRoute(id,patch){ const i=_routes.findIndex(r=>r.id===id); if(i>-1) _routes[i]={..._routes[i],...patch}; return _routes[i]; },
+  async setRouteStatus(id,status){ return api.updateRoute(id,{status}); },
+  async skipRouteDate(id,date){ return null; },
+  async deleteRoute(id){ const i=_routes.findIndex(r=>r.id===id); if(i>-1) _routes.splice(i,1); return null; },
 
-  // --- Ride requests ---
-  async sendRequest(matchId,message){ return (await apiFetch('/matches/'+matchId+'/request', {method:'POST', body:{message}})).data; },
-  async listIncomingRequests(filters={}){ return (await apiFetch('/requests'+toQuery(filters))).data; },
-  async approveRequest(matchId){ return (await apiFetch('/matches/'+matchId+'/approve', {method:'PATCH'})).data; },
-  async declineRequest(matchId,reason){ return (await apiFetch('/matches/'+matchId+'/decline', {method:'PATCH', body:{reason}})).data; },
+  // Matching
+  async getMatchesForRoute(){ return [..._matches]; },
+  async getMatch(id){ return _matches.find(m=>m.matchId===id)||_matches[0]; },
 
-  // --- Trips ---
-  async listMyTrips(filters={}){ return (await apiFetch('/trips'+toQuery(filters))).data; },
-  async getTrip(id){ return (await apiFetch('/trips/'+id)).data; },
-  async statusPing(id,data){ return await apiFetch('/trips/'+id+'/status-ping', {method:'POST', body:data}); },
-  async completeTrip(id){ return (await apiFetch('/trips/'+id+'/complete', {method:'PATCH'})).data; },
-  async cancelTrip(id,reason){ return (await apiFetch('/trips/'+id+'/cancel', {method:'PATCH', body:{reason}})).data; },
+  // Ride requests
+  async sendRequest(matchId){ const m=_matches.find(m=>m.matchId===matchId); if(m) m.status='requested'; return m||{}; },
+  async listIncomingRequests(){ return _matches.filter(m=>m.status==='requested').map(m=>({...m,id:m.matchId})); },
+  async approveRequest(matchId){ const m=_matches.find(m=>m.matchId===matchId); if(m) m.status='approved'; return m||{}; },
+  async declineRequest(matchId){ const m=_matches.find(m=>m.matchId===matchId); if(m) m.status='declined'; return m||{}; },
 
-  // --- Cost-split ---
-  async getCostSplit(id){ return (await apiFetch('/trips/'+id+'/cost-split')).data; },
-  async recalculateCostSplit(id,fuelPricePerLiter){ return (await apiFetch('/trips/'+id+'/cost-split/recalculate', {method:'POST', body:{fuelPricePerLiter}})).data; },
+  // Trips
+  async listMyTrips(){ return [..._trips]; },
+  async getTrip(id){ return _trips.find(t=>t.id===id)||_trips[0]; },
+  async statusPing(){ return null; },
+  async completeTrip(id){ const t=_trips.find(t=>t.id===id); if(t) t.status='completed'; return t||{}; },
+  async cancelTrip(id){ const t=_trips.find(t=>t.id===id); if(t) t.status='cancelled'; return t||{}; },
 
-  // --- Ratings ---
-  async submitRating(data){ return (await apiFetch('/ratings', {method:'POST', body:data})).data; },
-  async ratingsForUser(userId){ return (await apiFetch('/users/'+userId+'/ratings')).data; },
+  // Cost-split
+  async getCostSplit(){ return {totalFuelCost:236,perRiderAmount:118,fuelPricePerLiter:320,distanceKm:18.5,riders:[
+    {userId:'me',name:'You',amount:118,paid:false},
+    {userId:'u2',name:'Hamza Iqbal',amount:118,paid:true},
+  ]}; },
+  async recalculateCostSplit(id,fuelPrice){ return api.getCostSplit(); },
 
-  // --- Notifications ---
-  async listNotifications(filters={}){ return (await apiFetch('/notifications'+toQuery(filters))).data; },
-  async markNotifRead(id){ return (await apiFetch('/notifications/'+id+'/read', {method:'PATCH'})).data; },
-  async markAllRead(){ return await apiFetch('/notifications/read-all', {method:'PATCH'}); },
+  // Ratings
+  async submitRating(data){ const r={id:_uid(),fromUser:{name:_me?.name||'You'},...data,createdAt:_now()}; _ratings.unshift(r); return r; },
+  async ratingsForUser(){ return [..._ratings]; },
 
-  // --- Safety ---
-  async submitSafetyReport(data){ return (await apiFetch('/safety/reports', {method:'POST', body:data})).data; },
-  async shareTripStatus(tripId,emergencyContactId){ return (await apiFetch('/trips/'+tripId+'/share-status', {method:'POST', body:{emergencyContactId}})).data; },
+  // Notifications
+  async listNotifications(filters={}){ return filters.unread ? _notifs.filter(n=>!n.read) : [..._notifs]; },
+  async markNotifRead(id){ const n=_notifs.find(n=>n.id===id); if(n) n.read=true; return n||{}; },
+  async markAllRead(){ _notifs.forEach(n=>n.read=true); return null; },
 
-  // --- Admin ---
-  async adminListUsers(filters={}){ return (await apiFetch('/admin/users'+toQuery(filters))).data; },
-  async adminVerifyUser(id){ return (await apiFetch('/admin/users/'+id+'/verify', {method:'PATCH'})).data; },
-  async adminSetUserStatus(id,status,reason){ return (await apiFetch('/admin/users/'+id+'/status', {method:'PATCH', body:{status,reason}})).data; },
-  async adminListReports(filters={}){ return (await apiFetch('/admin/reports'+toQuery(filters))).data; },
-  async adminResolveReport(id,resolution,notes){ return (await apiFetch('/admin/reports/'+id+'/resolve', {method:'PATCH', body:{resolution,notes}})).data; },
-  async adminAnalytics(){ return (await apiFetch('/admin/analytics/overview')).data; },
+  // Safety
+  async submitSafetyReport(data){ const r={id:_uid(),...data,status:'reviewing',createdAt:_now()}; _reports.push(r); return r; },
+  async shareTripStatus(){ return null; },
+
+  // Admin
+  async adminListUsers(){ return [..._adminUsers]; },
+  async adminVerifyUser(id){ const u=_adminUsers.find(u=>u.id===id); if(u) u.verified=true; return u||{}; },
+  async adminSetUserStatus(id,status){ const u=_adminUsers.find(u=>u.id===id); if(u) u.status=status; return u||{}; },
+  async adminListReports(){ return [..._reports]; },
+  async adminResolveReport(id,resolution){ const r=_reports.find(r=>r.id===id); if(r){r.status='resolved';r.resolution=resolution;} return r||{}; },
+  async adminAnalytics(){ return {totalUsers:_adminUsers.length, activeRoutes:_routes.length, tripsThisMonth:14, avgRating:4.75, recentTrips:_trips.slice(0,3)}; },
 };
 
 /* ======================================================================
