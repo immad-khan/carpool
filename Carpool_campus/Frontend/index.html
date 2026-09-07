@@ -674,7 +674,7 @@ function authLogin(){
   <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--ink-faint);">
     <a class="link-text" href="#/register">Create an account</a>
   </p>
-  <div class="demo-note">${icon('info','icon-sm')}<span><b>Mock mode:</b> Enter any email and any password — login always succeeds. Backend: <span class="mono">${escapeHtml(getApiBaseUrl())}</span></span></div>`;
+  <div class="demo-note">${icon('info','icon-sm')}<span><b>Mock mode:</b> Enter any email and any password — login always succeeds instantly.</span></div>`;
 }
 function authRegister(){
   return `
@@ -1530,7 +1530,7 @@ async function viewProfile(root,u){
 
         <div class="card" style="margin-top:18px;">
           <div class="section-title" style="margin-bottom:6px;"><h2>${icon('settings','icon-sm')} Backend</h2></div>
-          <div class="field"><label>API base URL</label><input type="text" id="apiBaseInput" value="${escapeHtml(getApiBaseUrl())}"></div>
+          <div class="demo-note" style="margin-bottom:12px;">${icon('info','icon-sm')}<span><b>Offline mock mode</b> — no backend needed. All data is stored in-memory.</span></div>
           <button class="btn btn-ghost btn-block btn-sm" id="saveApiBase">Save & reconnect</button>
         </div>
 
