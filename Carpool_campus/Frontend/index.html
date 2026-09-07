@@ -712,7 +712,7 @@ function authVerify(){
     <button class="btn btn-primary btn-block" type="submit" id="otpBtn">Verify & continue</button>
   </form>
   <p style="text-align:center; margin-top:16px; font-size:13px;"><a class="link-text" id="resendOtp">Resend code</a></p>
-  <div class="demo-note">${icon('info','icon-sm')}<span>The code is emailed via the backend's configured SMTP account. If registration failed with a server error instead of reaching this screen, SMTP probably isn't set up in the backend's <span class="mono">.env</span> yet — check the backend's terminal output.</span></div>`;
+  <div class="demo-note">${icon('info','icon-sm')}<span><b>Mock mode:</b> Any 6-digit code you type will be accepted. Just enter any number like <span class="mono">000000</span> and press Verify.</span></div>`;
 }
 let sessionEmail = '';
 function bindAuthEvents(view){

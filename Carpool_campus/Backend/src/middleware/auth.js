@@ -1,6 +1,5 @@
 const ApiError = require('../utils/ApiError');
-const { verifyAccessToken } = require('../utils/jwt');
-const User = require('../models/User');
+const { MOCK_USER } = require('../mock/store');
 
 async function authenticate(req, res, next) {
   const header = req.headers.authorization || '';
@@ -10,34 +9,29 @@ async function authenticate(req, res, next) {
     throw ApiError.unauthorized('Missing or malformed Authorization header');
   }
 
-  // Stateless mock: skip JWT verification and DB lookup
+  // Stateless mock: skip JWT verification and DB lookup entirely
   req.user = {
-    _id: 'mock_user_id',
-    name: 'Test User',
-    email: 'mock@campus.edu',
-    roles: ['rider'],
-    status: 'active',
+    ...MOCK_USER,
+    // Clone methods so they work correctly
+    toPublicJSON: MOCK_USER.toPublicJSON.bind(MOCK_USER),
+    toLimitedPublicJSON: MOCK_USER.toLimitedPublicJSON.bind(MOCK_USER),
     hasCapability: () => true,
     isAdmin: () => false,
-    toPublicJSON: function() { 
-      return { id: this._id, name: this.name, email: this.email, roles: this.roles, verified: true };
-    }
+    save: async function() { return this; },
   };
-  
+
   next();
 }
 
 function requireCapability(role) {
   return (req, res, next) => {
-    if (!req.user.hasCapability(role)) {
-      throw ApiError.forbidden(`Requires ${role} capability`);
-    }
+    // Always pass in mock mode
     next();
   };
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.user.isAdmin()) throw ApiError.forbidden('Admin access required');
+  // Always pass in mock mode
   next();
 }
 

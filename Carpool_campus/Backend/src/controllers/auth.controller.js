@@ -1,25 +1,21 @@
 const { success, noContent } = require('../utils/apiResponse');
+const { MOCK_USER_ID, MOCK_USER } = require('../mock/store');
 
 const MOCK_TOKEN = 'mock_jwt_token_123';
 
 async function register(req, res) {
   const { name, email, role } = req.body;
-  const mockId = 'mock_user_id_' + Date.now();
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
   return success(res, {
     statusCode: 201,
-    data: { id: mockId, name, email, role, verified: false },
+    data: { id: MOCK_USER_ID, name, email, role, verified: false },
     message: `Verification OTP sent to your campus email. (MOCK OTP is: ${otp})`,
   });
 }
 
 async function verifyEmail(req, res) {
-  // Stateless: Always accept whatever OTP the user inputs
-  return success(res, {
-    data: { id: 'mock_user_id', verified: true },
-    message: 'Email verified successfully.',
-  });
+  // Stateless: accept any OTP
+  return success(res, { data: { id: MOCK_USER_ID, verified: true }, message: 'Email verified successfully.' });
 }
 
 async function resendOtp(req, res) {
@@ -29,19 +25,12 @@ async function resendOtp(req, res) {
 
 async function login(req, res) {
   const { email } = req.body;
-  
-  // Stateless: Always allow login for any email to bypass Vercel instances losing memory
+  const user = { ...MOCK_USER, email: email || MOCK_USER.email, name: (email || '').split('@')[0] || MOCK_USER.name };
   return success(res, {
     data: {
       accessToken: MOCK_TOKEN,
       refreshToken: MOCK_TOKEN,
-      user: {
-        id: 'mock_user_id',
-        name: email.split('@')[0],
-        email: email,
-        roles: ['rider'],
-        verified: true
-      },
+      user: { id: user.id, name: user.name, email: user.email, roles: user.roles, verified: true },
     },
   });
 }
@@ -62,13 +51,4 @@ async function logout(req, res) {
   return noContent(res);
 }
 
-module.exports = {
-  register,
-  verifyEmail,
-  resendOtp,
-  login,
-  refreshToken,
-  forgotPassword,
-  resetPassword,
-  logout,
-};
+module.exports = { register, verifyEmail, resendOtp, login, refreshToken, forgotPassword, resetPassword, logout };

@@ -1,43 +1,28 @@
-const EmergencyContact = require('../models/EmergencyContact');
-const ApiError = require('../utils/ApiError');
 const { success, noContent } = require('../utils/apiResponse');
+const { id, emergencyContacts } = require('../mock/store');
 
-// GET /emergency-contacts
 async function list(req, res) {
-  const contacts = await EmergencyContact.find({ userId: req.user._id }).sort('-createdAt');
-  return success(res, { data: contacts.map((c) => c.toPublicJSON()) });
+  const myContacts = [...emergencyContacts.values()].filter(c => c.userId === req.user._id);
+  return success(res, { data: myContacts });
 }
 
-// POST /emergency-contacts
 async function create(req, res) {
-  const { name, phone } = req.body;
-  const contact = await EmergencyContact.create({ userId: req.user._id, name, phone });
-  return success(res, { statusCode: 201, data: contact.toPublicJSON() });
+  const { name, phone, relation } = req.body;
+  const contactId = id();
+  const contact = { id: contactId, userId: req.user._id, name, phone, relation };
+  emergencyContacts.set(contactId, contact);
+  return success(res, { statusCode: 201, data: contact });
 }
 
-async function findOwned(contactId, userId) {
-  const contact = await EmergencyContact.findById(contactId);
-  if (!contact) throw ApiError.notFound('Emergency contact not found');
-  if (contact.userId.toString() !== userId.toString()) throw ApiError.forbidden('Not the owner');
-  return contact;
-}
-
-// PATCH /emergency-contacts/:contactId
 async function update(req, res) {
-  const contact = await findOwned(req.params.contactId, req.user._id);
-
-  const { name, phone } = req.body;
-  if (name !== undefined) contact.name = name;
-  if (phone !== undefined) contact.phone = phone;
-  await contact.save();
-
-  return success(res, { data: contact.toPublicJSON() });
+  const contact = emergencyContacts.get(req.params.contactId);
+  if (!contact) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Contact not found' } });
+  Object.assign(contact, req.body);
+  return success(res, { data: contact });
 }
 
-// DELETE /emergency-contacts/:contactId
 async function remove(req, res) {
-  const contact = await findOwned(req.params.contactId, req.user._id);
-  await contact.deleteOne();
+  emergencyContacts.delete(req.params.contactId);
   return noContent(res);
 }
 

@@ -1,24 +1,11 @@
-const Match = require('../models/Match');
-const Route = require('../models/Route');
-const ApiError = require('../utils/ApiError');
 const { success } = require('../utils/apiResponse');
+const { buildPagination } = require('../utils/apiResponse');
+const { id, matches } = require('../mock/store');
 
-// GET /matches/:matchId
-async function getById(req, res) {
-  const match = await Match.findById(req.params.matchId);
-  if (!match) throw ApiError.notFound('Match not found');
-
-  const [driverRoute, riderRoute] = await Promise.all([
-    Route.findById(match.driverRouteId),
-    Route.findById(match.riderRouteId),
-  ]);
-
-  const ownerIds = [driverRoute?.userId?.toString(), riderRoute?.userId?.toString()];
-  if (!ownerIds.includes(req.user._id.toString()) && !req.user.isAdmin()) {
-    throw ApiError.forbidden('Not a participant in this match');
-  }
-
-  return success(res, { data: match.toPublicJSON() });
+async function getMatch(req, res) {
+  const match = matches.get(req.params.matchId);
+  if (!match) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Match not found' } });
+  return success(res, { data: match });
 }
 
-module.exports = { getById };
+module.exports = { getMatch };

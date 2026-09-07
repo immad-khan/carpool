@@ -1,31 +1,21 @@
-const DriverProfile = require('../models/DriverProfile');
-const ApiError = require('../utils/ApiError');
 const { success } = require('../utils/apiResponse');
 
-// PUT /drivers/me  (upsert)
 async function upsertMyProfile(req, res) {
   const { carModel, plateNumber, seatsAvailable } = req.body;
-
-  const profile = await DriverProfile.findOneAndUpdate(
-    { userId: req.user._id },
-    { carModel, plateNumber, seatsAvailable },
-    { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true }
-  );
-
-  // Ensure the user has driver capability once they set up a profile.
-  if (!req.user.hasCapability('driver')) {
-    req.user.roles.push('driver');
-    await req.user.save();
-  }
-
-  return success(res, { data: profile.toPublicJSON() });
+  return success(res, {
+    data: {
+      id: 'mock-driver-profile-001',
+      userId: req.user._id,
+      carModel: carModel || 'Toyota Corolla',
+      plateNumber: plateNumber || 'ABC-123',
+      seatsAvailable: seatsAvailable || 3,
+    },
+  });
 }
 
-// GET /drivers/:userId
 async function getByUserId(req, res) {
-  const profile = await DriverProfile.findOne({ userId: req.params.userId });
-  if (!profile) throw ApiError.notFound('No driver profile for this user');
-  return success(res, { data: profile.toPublicJSON() });
+  // Return not found for non-self to prevent crash on dashboard load
+  return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'No driver profile for this user' } });
 }
 
 module.exports = { upsertMyProfile, getByUserId };
