@@ -296,7 +296,7 @@ tr:last-child td{border-bottom:none;}
 /* ======================================================================
    BACKEND CONFIG — points this frontend at a real CarpoolCampus API
    ====================================================================== */
-function getApiBaseUrl(){ return window.CARPOOL_API_BASE_URL || localStorage.getItem('cc_api_base') || 'http://localhost:5000/api/v1'; }
+function getApiBaseUrl(){ return window.CARPOOL_API_BASE_URL || localStorage.getItem('cc_api_base') || 'https://carpool-two-beta.vercel.app/api/v1'; }
 function setApiBaseUrl(url){ localStorage.setItem('cc_api_base', url.replace(/\/+$/,'')); }
 
 /* ======================================================================
@@ -679,7 +679,7 @@ function authLogin(){
   <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--ink-faint);">
     <a class="link-text" href="#/register">Create an account</a>
   </p>
-  <div class="demo-note">${icon('info','icon-sm')}<span>Connecting to <span class="mono">${escapeHtml(getApiBaseUrl())}</span>. First time? Run <span class="mono">npm run seed:admin</span> in the backend to create an admin login, or register a new account below.</span></div>`;
+  <div class="demo-note">${icon('info','icon-sm')}<span><b>Mock mode:</b> Enter any email and any password — login always succeeds. Backend: <span class="mono">${escapeHtml(getApiBaseUrl())}</span></span></div>`;
 }
 function authRegister(){
   return `
