@@ -14,8 +14,7 @@ const app = express();
 // A Vercel Function imports this file instead of running src/server.js. Start
 // shared service connections once per warm function instance and wait for them
 // before handling a request.
-const servicesReady = Promise.all([connectDB(), connectRedis()]);
-servicesReady.catch((err) => console.error('Failed to initialize backend services:', err));
+const servicesReady = Promise.resolve();
 
 app.use(helmet());
 const allowedOrigins = (process.env.FRONTEND_URL || '')
